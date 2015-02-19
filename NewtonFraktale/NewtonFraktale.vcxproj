@@ -95,10 +95,12 @@ copy "newton.cl" "$(TargetDir)"</Command>
     <ClCompile Include="ComplexNumber.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="NewtonFraktalApp.cpp" />
+    <ClCompile Include="NewtonFraktalCLGeneration.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ComplexNumber.h" />
     <ClInclude Include="NewtonFraktalApp.h" />
+    <ClInclude Include="NewtonFraktalCLGeneration.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="newton.cl" />

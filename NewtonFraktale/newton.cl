@@ -1,13 +1,13 @@
-//#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
 struct complex {
-	float im;
-	float re;
-	float r;
-	float phi;
+	double im;
+	double re;
+	double r;
+	double phi;
 };
 
-struct complex createComplexFromPolar(float _r, float _phi){
+struct complex createComplexFromPolar(double _r, double _phi){
 	struct complex t;
 	t.r = _r;
 	t.phi = _phi;
@@ -18,7 +18,7 @@ struct complex createComplexFromPolar(float _r, float _phi){
 	return t;
 }
 
-struct complex createComplexFromKarthes(float real, float imag){
+struct complex createComplexFromKarthes(double real, double imag){
 	struct complex t;
 	t.re = real;
 	t.im = imag;
@@ -51,19 +51,19 @@ struct complex subComplex(const struct complex z, const struct complex c){
 	return recreateComplexFromKarthes(t);
 }
 
-struct complex addComplexScalar(const struct complex z, const float n){
+struct complex addComplexScalar(const struct complex z, const double n){
 	struct complex t;
 	t.re = z.re + n;
 	return recreateComplexFromKarthes(t);
 }
 
-struct complex subComplexScalar(const struct complex z, const float n){
+struct complex subComplexScalar(const struct complex z, const double n){
 	struct complex t;
 	t.re = z.re - n;
 	return recreateComplexFromKarthes(t);
 }
 
-struct complex multComplexScalar(const struct complex z, const float n) {
+struct complex multComplexScalar(const struct complex z, const double n) {
 	struct complex t;
 	t.re = z.re * n;
 	t.im = z.im * n;
@@ -81,22 +81,25 @@ struct complex divComplex(const struct complex z, const struct complex c) {
 	return createComplexFromPolar(z.r / c.r, z.phi - c.phi);
 }
 
-__kernel void newtonFraktal(__global const int* res, __global const float* param, __global int* result){
-	const int x = get_global_id(0);
-	const int y = get_global_id(1);
+__kernel void newtonFraktal(__global const int* res, __global const double* param, __global const int* round, __global int* result){
+	const int x = get_global_id(0)+res[0]*round[0];
+	const int y = get_global_id(1)+res[1]*round[0];
+	
+	const int xRes = res[0];
+	const int yRes = res[1];
 
-	struct complex z = createComplexFromKarthes(param[x - res[0] / 2], param[y - res[0] / 2]);
+	struct complex z = createComplexFromKarthes(x - (xRes / 2), y - (yRes / 2));
 
-	struct complex c = createComplexFromKarthes(param[x - res[1] / 2], param[y - res[1] / 2]);
+	struct complex c = createComplexFromKarthes(param[0], param[1]);
 
 	int i = 0;
-	while (z.r < 1000){
-		if (i >= 10000000)
+	while (z.r < 500){
+		if (i >= 10000)
 			break;
 		z = subComplex(z, divComplex(addComplex(addComplex(multComplex(multComplex(z,z),c),multComplex(z,c)),c),addComplex(multComplexScalar(multComplex(z,c),2),c)));
 		//z-(c*z*z + c*z + c) / ((c*z) * 2 + c);
 
 		i++;
 	}
-	result[x - get_global_offset(0) + y*res[0] - get_global_offset(1)] = i;
+	result[x + res[0]*y] = i;
 }

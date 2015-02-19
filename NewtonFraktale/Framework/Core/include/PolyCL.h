@@ -19,10 +19,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-
+#ifdef UseOpenCL
 #pragma once
 #include <Polycode.h>
-#include <iostream>
 
 #define __NO_STD_VECTOR
 #define __CL_ENABLE_EXCEPTIONS
@@ -40,7 +39,7 @@ namespace Polycode {
 	/*
 	*Friendly OpenCL Wrapper - You may not use unless you know what you do! Needs to be templated: 1. param: the typename you want to get back, 2. param: the length of the array to get back
 	*/
-	template <typename OpType>
+	template <typename OpType/*, long length*/>
 	class _PolyExport PolyCL : public PolyBase {
 	public:
 
@@ -52,15 +51,13 @@ namespace Polycode {
 		* @param size a vector of the sizes of the arrays stored in arrays
 		* @param result The OpenCL result Array is put in
 		*/
-		PolyCL(String kernelSource, String kernelName, std::vector< void* > arrays, std::vector< size_t > size) {
+		PolyCL(String kernelSource, String kernelName, std::vector< void* > arrays, std::vector< size_t > size, OpType *result) {
 			try {
 				if (init()) {
 					buildProgram(kernelSource);
 					createKernel(kernelName);
-					this->arrays = arrays;
-					this->size = size;
 					createBuffers(arrays, size);
-					executeKernel();
+					executeKernel(result);
 					cleanBuffers();
 					success = true;
 				}
@@ -72,8 +69,7 @@ namespace Polycode {
 			catch (cl::Error& err) {
 				Logger::log("Error: %s\n", err.what());
 				Logger::log("Error Code: %d\n", err.err());
-				std::cout << programCL.getBuildInfo<CL_PROGRAM_BUILD_LOG>(defaultDeviceCL);
-				//Logger::log("Build log: %s\n", stream.str().c_str());
+				Logger::log("Build log: %d\n", programCL.getBuildInfo<CL_PROGRAM_BUILD_LOG>(defaultDeviceCL));
 				success = false;
 			}
 		}
@@ -84,8 +80,7 @@ namespace Polycode {
 		PolyCL() {
 			if (init()) {
 				success = true;
-			}
-			else {
+			} else {
 				success = false;
 				return;
 			}
@@ -96,17 +91,15 @@ namespace Polycode {
 		* @return if Platform and Device found true, otherwise false.
 		*/
 		bool init() {
-			result = (OpType*)malloc(sizeof(OpType)*2000);
+			//result = new OpType[length];
 			if (!setPlatforms()) {
 				Logger::log("OpenCL disabled!\n");
 				return false;
-			}
-			else {
+			} else {
 				if (!setDevicesFromPlatform(platformsCL[0])) {
 					Logger::log("OpenCL disabled!\n");
 					return false;
-				}
-				else {
+				} else {
 					//setDevicesFromPlatform(platformsCL[0]);
 					createContext();
 					return true;
@@ -116,7 +109,7 @@ namespace Polycode {
 		}
 
 		/**
-		* Loads the platforms.
+		* Sets the platforms.
 		* @return if Platform found true, otherwise false.
 		*/
 		bool setPlatforms() {
@@ -124,8 +117,7 @@ namespace Polycode {
 			if (platformsCL.size() == 0) {
 				Logger::log("OpenCL Platform fail\n");
 				return false;
-			}
-			else {
+			} else {
 				return true;
 			}
 		}
@@ -145,8 +137,7 @@ namespace Polycode {
 					return false;
 				}
 				Logger::log("OpenCL Device: [CPU] ");
-			}
-			else {
+			} else {
 				Logger::log("OpenCL Device: [GPU] ");
 			}
 			defaultDeviceCL = devicesCL[0];
@@ -187,74 +178,40 @@ namespace Polycode {
 
 		/**
 		* Creates and allocates the needed buffers.
-		* @param arrays A vector of Arrays of any type which will be the parameters - the result should be stored in the last parameter, but is not stored in this array!
+		* @param arrays A vector of Arrays of any type which will be the parameters
 		* @param size a vector of the sizes of the arrays stored in arrays
 		*/
 		void createBuffers(std::vector< void* > arrays, std::vector< size_t > size) {
-			int i = 0;
-			for (i = 0; i < arrays.size(); i++) {
+			for (int i = 0; i < arrays.size(); i++) {
 				buffer.push_back(cl::Buffer(contextCL, CL_MEM_READ_WRITE, size[i]));
 				queueCL.enqueueWriteBuffer(buffer[i], CL_TRUE, 0, size[i], arrays[i]);
 				kernelCL.setArg(i, buffer[i]);
 			}
+			result_buffer = cl::Buffer(contextCL, CL_MEM_READ_WRITE, sizeof(OpType)*length);
+			kernelCL.setArg(arrays.size(), result_buffer);
 			
-			Logger::log("OpenCL Buffers: allocated and set\n");
+			//Logger::log("OpenCL Buffers: allocated and set\n");
 		}
 
 		/**
 		* Finally executes the kernel and sets result
 		* @param result The OpenCL result Array is put in
 		*/
-		void executeKernel() {
-			int x = 0, y = 0;
-			cl::vector<size_t> maxGroup;
-			int workedTrough = 0, rounds = 0;
+		void executeKernel(OpType* result) {
+			queueCL.enqueueNDRangeKernel(kernelCL, cl::NullRange, cl::NDRange(length), cl::NullRange, NULL, &event);
+			
+			queueCL.finish();
+			queueCL.enqueueReadBuffer(result_buffer, CL_TRUE, 0, sizeof(result), (OpType*)result);
+			this->result = result;
 
-			defaultDeviceCL.getInfo<cl::vector<size_t>>(CL_DEVICE_MAX_WORK_ITEM_SIZES, &maxGroup);
-			result = (OpType*)malloc(sizeof(OpType)*maxGroup[0] * maxGroup[1]);
-			OpType* tRes = this->result;
-
-			while (x < size[size.size() - 3] || y<size[size.size() - 2]){
-
-				result = (OpType*)malloc(workedTrough + sizeof(OpType) * maxGroup[0] * maxGroup[1]);
-				tRes = result + workedTrough;
-
-				cl::NDRange offset = cl::NDRange(x, y);
-				if (maxGroup[0] > size[size.size() - 3] - x){
-					maxGroup[0] = size[size.size() - 3] - x;
-				}
-				if (maxGroup[1] > size[size.size() - 2] - y){
-					maxGroup[1] = size[size.size() - 2] - y;
-				}
-
-				result_buffer = cl::Buffer(contextCL, CL_MEM_READ_WRITE, sizeof(OpType)*maxGroup[0] * maxGroup[1]);
-				kernelCL.setArg(arrays.size(), result_buffer);
-
-				cl::NDRange global = cl::NDRange(maxGroup[0], maxGroup[1]);
-				queueCL.enqueueNDRangeKernel(kernelCL, offset, global, cl::NullRange, NULL, &event);
-				
-				queueCL.finish();
-				queueCL.enqueueReadBuffer(result_buffer, CL_TRUE, 0, sizeof(OpType) * maxGroup[0] * maxGroup[1], (OpType*)tRes);
-
-				workedTrough = sizeof(OpType) * maxGroup[0] * maxGroup[1];
-
-				rounds++;
-
-				x = maxGroup[0] * rounds;
-				y = maxGroup[1] * rounds;
-			}
-
-			Logger::log("Result available now\n");
+			//Logger::log("Result available now\n");
 		}
 
 		/**
 		* Cleanes the buffers.
 		*/
 		void cleanBuffers() {
-			for (int i = 0; i < buffer.size(); i++){
-				buffer[i].~Buffer();
-			}
-			result_buffer.~Buffer();
+			buffer.~vector();
 		}
 
 		/**
@@ -327,8 +284,6 @@ namespace Polycode {
 		std::string deviceName;
 
 		OpType* result;
-
-		std::vector<void*> arrays;
-		std::vector<size_t> size;
 	};
 }
+#endif //UseOpenCL

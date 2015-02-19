@@ -24,12 +24,18 @@
     <ClCompile Include="NewtonFraktalApp.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="NewtonFraktalCLGeneration.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ComplexNumber.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="NewtonFraktalApp.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonFraktalCLGeneration.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>

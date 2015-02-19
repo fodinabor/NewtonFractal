@@ -3,9 +3,7 @@
 #include "PolycodeView.h"
 #include "Polycode.h"
 #include "ComplexNumber.h"
-#include "PolyCL.h"
-
-#define MAX_ROUNDS 100000
+#include "NewtonFraktalCLGeneration.h"
 
 using namespace Polycode;
 
@@ -22,8 +20,9 @@ private:
     Core *core;
 	Scene *scene;
 
-	PolyCL<float>* pCl;
+	NewtonFraktalCLGeneration* gen;
 
 	Image* fraktal;
 };
 
+void newtonFraktal(const int* res, const double* param, int* result);
