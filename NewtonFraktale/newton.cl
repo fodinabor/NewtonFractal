@@ -77,13 +77,20 @@ struct complex multComplex(const struct complex z, const struct complex c) {
 	return recreateComplexFromKarthes(t);
 }
 
+struct complex powComplex(const struct complex z, int i){
+	struct complex t = z;
+	for (int j = 0; j < i; j++){
+		t = multComplex(t, z);
+	}
+}
+
 struct complex divComplex(const struct complex z, const struct complex c) {
 	return createComplexFromPolar(z.r / c.r, z.phi - c.phi);
 }
 
-__kernel void newtonFraktal(__global const int* res, __global const double* param, __global const int* round, __global int* result){
-	const int x = get_global_id(0)+res[0]*round[0];
-	const int y = get_global_id(1)+res[1]*round[0];
+__kernel void newtonFraktal(__global const int* res, __global const double* param, __global int* result, __global int* offset){
+	const int x = get_global_id(0) + offset[0];
+	const int y = get_global_id(1) + offset[1];
 	
 	const int xRes = res[0];
 	const int yRes = res[1];
@@ -93,13 +100,30 @@ __kernel void newtonFraktal(__global const int* res, __global const double* para
 	struct complex c = createComplexFromKarthes(param[0], param[1]);
 
 	int i = 0;
-	while (z.r < 500){
-		if (i >= 10000)
+	while (z.r < 800){
+		if (i >= 4000)
 			break;
-		z = subComplex(z, divComplex(addComplex(addComplex(multComplex(multComplex(z,z),c),multComplex(z,c)),c),addComplex(multComplexScalar(multComplex(z,c),2),c)));
-		//z-(c*z*z + c*z + c) / ((c*z) * 2 + c);
+		z = subComplex(z, divComplex(addComplex(addComplex(addComplex(multComplex(powComplex(z, 4), c), multComplex(powComplex(z, 3), c)), multComplex(powComplex(z, 2), c)), c), addComplex(addComplex(multComplexScalar(multComplex(powComplex(z, 3), c), 4), multComplexScalar(multComplex(powComplex(z,2), c), 3)), multComplexScalar(multComplex(c, z), 2))));
+		//z-(c*z*z*z*z + c*z*z*z + c*z*z + c) /																																		((c*z*z*z) * 4 + (c*z*z) * 3 + (c*z) * 2);
 
 		i++;
 	}
-	result[x + res[0]*y] = i;
+	result[x + res[0] * y] = i;
+}
+
+__kernel void getMinMax(__global const int* data, __global const int* length, __global int* minMax){
+	const int x = get_global_id(0)*length[0];
+	const int xM = get_global_id(0);
+	const int y = get_global_id(1)*length[0];
+
+	minMax[xM + y*get_global_size(0)] = min(data[x + y*get_global_size(0)], data[x + y*get_global_size(0) + 1]);
+	for (int i = 2; i < length[0]; i++){
+		minMax[xM + y*get_global_size(0)] = min(data[x + y*get_global_size(0) + i], minMax[xM + y*get_global_size(0)]);
+	}
+
+	minMax[xM + y*get_global_size(0) + 1] = max(data[x + y*get_global_size(0)], data[x + y*get_global_size(0) + 1]);
+	for (int i = 2; i < length[0]; i++){
+		minMax[xM + y*get_global_size(0) + 1] = max(data[x + y*get_global_size(0) + i], minMax[xM + y*get_global_size(0) + 1]);
+	}
+
 }

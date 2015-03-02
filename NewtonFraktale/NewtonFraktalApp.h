@@ -4,6 +4,7 @@
 #include "Polycode.h"
 #include "ComplexNumber.h"
 #include "NewtonFraktalCLGeneration.h"
+#include "NewtonFraktalCUDAGeneration.h"
 
 using namespace Polycode;
 
@@ -12,7 +13,9 @@ public:
 	NewtonFraktalApp(PolycodeView *view);
 	~NewtonFraktalApp();
     
-	Number runNewton(ComplexNumber c, ComplexNumber z);
+	int runNewton(ComplexNumber c, ComplexNumber z);
+
+	void drawFractal(int* data);
 
     bool Update();
     
@@ -20,9 +23,10 @@ private:
     Core *core;
 	Scene *scene;
 
-	NewtonFraktalCLGeneration* gen;
+	int* getMaxAndMin(int *data);
+
+	NewtonFraktalCLGeneration* genCL;
+	//NewtonFraktalCUDAGeneration *genCUDA;
 
 	Image* fraktal;
 };
-
-void newtonFraktal(const int* res, const double* param, int* result);

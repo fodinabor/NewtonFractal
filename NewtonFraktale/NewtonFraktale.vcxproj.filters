@@ -27,6 +27,9 @@
     <ClCompile Include="NewtonFraktalCLGeneration.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="NewtonFraktalCUDAGeneration.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ComplexNumber.h">
@@ -38,10 +41,24 @@
     <ClInclude Include="NewtonFraktalCLGeneration.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="NewtonFraktalCUDAGeneration.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="ComplexNumber.cuh">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="newton.cl">
       <Filter>Ressourcendateien</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="NewtonFraktal.cu">
+      <Filter>Quelldateien</Filter>
+    </CudaCompile>
+    <CudaCompile Include="ComplexNumber.cu">
+      <Filter>Quelldateien</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>
