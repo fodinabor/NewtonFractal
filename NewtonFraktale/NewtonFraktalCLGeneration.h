@@ -6,13 +6,14 @@
 
 class NewtonFraktalCLGeneration {
 public:
-	NewtonFraktalCLGeneration(cl_double* param);
+	NewtonFraktalCLGeneration(cl_int* zoom, cl_double* param, cl_int* res);
 	~NewtonFraktalCLGeneration();
 	
-	void initCLAndRunNewton(cl_double* param);
-	cl_int* getMinMax(int *data);
+	void initCLAndRunNewton(cl_int* zoom, cl_double* param, cl_int* res);
+	void runNewton(cl_int* zoom, cl_double* param, cl_int* res);
 
 	cl_int* result;
+	cl_int* typeRes;
 	cl_int err;
 
 protected:
