@@ -16,6 +16,7 @@ public:
 	~NewtonFraktalApp();
     
 	int runNewton(std::complex<double> z, int& type);
+	void findZeros(Polynom *pol, Polynom *der, std::complex<cl_double> z);
 
 	void drawFractal();
 
@@ -39,8 +40,10 @@ private:
 
 	UIButton *redraw;
 	UITextInput *zoomField;
+	SceneImage *centerSel;
 
 	cl_int *zoom;
-	cl_double* param;
+	//cl_double* param;
+	cl_double* centerCL;
 	cl_int *res;
 };

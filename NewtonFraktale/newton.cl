@@ -1,5 +1,6 @@
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 #define pi 3.14159265359
+#define RESOLUTION 0.00000001
 
 struct complex {
 	double im;
@@ -64,87 +65,105 @@ struct complex multComplex(const struct complex z, const struct complex c) {
 }
 
 struct complex powComplex(const struct complex z, int i){
-	struct complex t = z;
-	for (int j = 0; j < i-1; j++){
-		t = multComplex(t, z);
-	}
-	return t;
+	return createComplexFromPolar(pow(z.r, (double)i), z.phi * i);
 }
 
 struct complex divComplex(const struct complex z, const struct complex c) {
 		return createComplexFromPolar(z.r / c.r, z.phi-c.phi);
 }
 
-bool compComplex(const struct complex z, const struct complex c, float comp){
+bool compComplex(const struct complex z, const struct complex c, double comp){
 	if (fabs(z.re - c.re) <= comp && fabs(z.im - c.im) <= comp)
 		return true;
 	return false;
 }
 
-__kernel void newtonFraktal(__global const int* res, __global const int* zoom, __global int* offset, __global const double* param, __global int* result, __global int* resType){
+struct complex computeFunction(const struct complex z, __global const struct complex* params, const int paramc){
+	struct complex sum = createComplexFromKarthes(0,0);
+	struct complex pow;
+	for (unsigned int i = 0; i<paramc; i++) {
+		pow = powComplex(z, i);
+		sum = addComplex(sum, multComplex(pow, params[i]));
+	}
+	return sum;
+}
+
+__kernel void findZeros(__global const int* res, 
+						__global const struct complex* params, __global const struct complex* paramsD, __global const int* paramc,
+						__global struct complex* out){
+	const int x = get_global_id(0);
+	const int y = get_global_id(1);
+
+	struct complex z = createComplexFromKarthes(x - res[0] / 2, y - res[1] / 2);
+	struct complex zo = z;
+
+	if (z.re == 0 && z.im == 0){
+		out[x + y*res[0]] = createComplexFromKarthes(100000, 100000);
+		return;
+	}
+
+	for (int i = 0; i < 1000; i++){
+		zo = z;
+		z = subComplex(z, divComplex(computeFunction(z, params, paramc[0]), computeFunction(z, paramsD, paramc[1])));
+		if (compComplex(z, zo, RESOLUTION)){
+			out[x + y*res[0]] = z;
+			return;
+		}
+	}
+	
+	out[x + y*res[0]] = createComplexFromKarthes(100000, 100000);
+}
+
+__kernel void newtonFraktal(__global const int* res, __global const int* zoom, __global const int* offset,
+							__global const double* center, __global const struct complex *zeros,
+							__global const struct complex *params, __global const struct complex *paramsD, __global const int* paramc,
+							__global int* result, __global int* resType){
 	const int x = get_global_id(0) + offset[0];
 	const int y = get_global_id(1) + offset[1];
 	
 	const int xRes = res[0];
 	const int yRes = res[1];
 	
-	const double a = (x - (xRes / 2)) == 0 ? 0 : (double)((x - (double)(xRes / 2)) / zoom[0]);
-	const double b = (y - (yRes / 2)) == 0 ? 0 : (double)((y - (double)(yRes / 2)) / zoom[1]);
+	const double a = (double)((x - (double)(xRes / 2)) / zoom[0]) + center[0];
+	const double b = (double)((y - (double)(yRes / 2)) / zoom[1]) + center[1];
 
 	struct complex z = createComplexFromKarthes(a, b);
-	
-	//struct complex c = createComplexFromKarthes(param[0], param[1]);
-
-	struct complex x1 = createComplexFromKarthes(0.7071068, 0.7071068);
-	struct complex x2 = createComplexFromKarthes(0.7071068, -0.7071068);
-	struct complex x3 = createComplexFromKarthes(-0.7071068, 0.7071068);
-	struct complex x4 = createComplexFromKarthes(-0.7071068, -0.7071068);
-	
-	struct complex f, d;
+	struct complex f, d, zo;
 
 	resType[x + xRes * y] = 11;
 
+	bool found = false;
 	int i = 0;
-	while (i < 6000 && fabs(z.r) < 10000){
-		f = addComplexScalar(powComplex(z, 4), 1);
-		d = multComplexScalar(powComplex(z, 3), 3);
+	while (i < 6000 && fabs(z.r) < 10000 && !found){
+		f = computeFunction(z, params, paramc[0]);//addComplexScalar(powComplex(z, 4), 1);
+		d = computeFunction(z, paramsD, paramc[1]);//multComplexScalar(powComplex(z, 3), 3);
 
 		z = subComplex(z, divComplex(f, d));
 		
 		i++;
-		if (compComplex(z, x1, 0.0000001)){
-			resType[x + xRes * y] = 0;
-			break;
-		} else if (compComplex(z, x2, 0.0000001)){
-			resType[x + xRes * y] = 1;
-			break;
-		} else if (compComplex(z, x3, 0.0000001)){
-			resType[x + xRes * y] = 2;
-			break;
-		} else if (compComplex(z, x4, 0.0000001)){
-			resType[x + xRes * y] = 3;
+		
+		for (int j = 0; j < paramc[0] - 1; j++){
+			if (compComplex(z, zeros[j], RESOLUTION)){
+				resType[x + xRes * y] = j;
+				found = true;
+				break;
+			}
+		}
+
+		if (compComplex(z, zo, RESOLUTION/100)){
+			resType[x + xRes * y] = 12;
 			break;
 		}
+		// else if (compComplex(z, x3, 0.0000001)){
+		//	resType[x + xRes * y] = 2;
+		//	break;
+		//} else if (compComplex(z, x4, 0.0000001)){
+		//	resType[x + xRes * y] = 3;
+		//	break;
+		//}
 	}
-	if (fabs(z.r) >= 1000){
-		resType[x + xRes * y] = 10;
+	if (fabs(z.r) >= 10000){
+		resType[x + xRes * y] = 12;
 	}
 	result[x + xRes * y] = i;
-}
-
-__kernel void getMinMax(__global const int* data, __global const int* length, __global int* minMax){
-	const int x = get_global_id(0)*length[0];
-	const int xM = get_global_id(0);
-	const int y = get_global_id(1)*length[0];
-
-	minMax[xM + y*get_global_size(0)] = min(data[x + y*get_global_size(0)], data[x + y*get_global_size(0) + 1]);
-	for (int i = 2; i < length[0]; i++){
-		minMax[xM + y*get_global_size(0)] = min(data[x + y*get_global_size(0) + i], minMax[xM + y*get_global_size(0)]);
-	}
-
-	minMax[xM + y*get_global_size(0) + 1] = max(data[x + y*get_global_size(0)], data[x + y*get_global_size(0) + 1]);
-	for (int i = 2; i < length[0]; i++){
-		minMax[xM + y*get_global_size(0) + 1] = max(data[x + y*get_global_size(0) + i], minMax[xM + y*get_global_size(0) + 1]);
-	}
-
 }
