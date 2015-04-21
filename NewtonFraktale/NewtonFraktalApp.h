@@ -10,6 +10,8 @@
 
 using namespace Polycode;
 
+cl_double mapCL(cl_double x, cl_double in_min, cl_double in_max, cl_double out_min, cl_double out_max);
+
 class NewtonFraktalApp : public EventHandler {
 public:
 	NewtonFraktalApp(PolycodeView *view);

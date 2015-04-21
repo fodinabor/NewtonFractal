@@ -13,7 +13,8 @@ public:
 	void calcZeros();
 	void runNewton(cl_int* zoom, cl_int* res, cl_double* center = NULL, struct cl_complex* params = NULL, struct cl_complex* paramsD = NULL, cl_int* paramc = NULL);
 
-	cl_int* result;
+	cl_double* result;
+	cl_int* iterations;
 	cl_int* typeRes;
 	cl_int err;
 

@@ -39,19 +39,19 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 	CoreServices::getInstance()->getRenderer()->setTextureFilteringMode(Renderer::TEX_FILTERING_NEAREST);
 
 	polynom = new Polynom();
-	polynom->addCoefficient(complex<cl_double>(2, 0));
-	polynom->addCoefficient(complex<cl_double>(-2, 0));
-	polynom->addCoefficient(complex<cl_double>(0, 0));
-	polynom->addCoefficient(complex<cl_double>(0, 0));
-	polynom->addCoefficient(complex<cl_double>(0, 0));
-	polynom->addCoefficient(complex<cl_double>(2, 4));
-	polynom->addCoefficient(complex<cl_double>(0, 0));
-	polynom->addCoefficient(complex<cl_double>(4, 7));
-	polynom->addCoefficient(complex<cl_double>(6, -4));
 	polynom->addCoefficient(complex<cl_double>(1, 0));
-	polynom->addCoefficient(complex<cl_double>(-1, 9));
-	polynom->addCoefficient(complex<cl_double>(1, 6));
-	polynom->addCoefficient(complex<cl_double>(-15, 4));
+	polynom->addCoefficient(complex<cl_double>(0, 0));
+	polynom->addCoefficient(complex<cl_double>(0, 0));
+	polynom->addCoefficient(complex<cl_double>(0, 0));
+	polynom->addCoefficient(complex<cl_double>(1, 0));
+	//polynom->addCoefficient(complex<cl_double>(2, 4));
+	//polynom->addCoefficient(complex<cl_double>(0, 0));
+	//polynom->addCoefficient(complex<cl_double>(4, 7));
+	//polynom->addCoefficient(complex<cl_double>(6, -4));
+	//polynom->addCoefficient(complex<cl_double>(1, 0));
+	//polynom->addCoefficient(complex<cl_double>(-1, 9));
+	//polynom->addCoefficient(complex<cl_double>(1, 6));
+	//polynom->addCoefficient(complex<cl_double>(-10, 4));
 
 	derivation = new Polynom((*polynom));
 	derivation->differentiate();
@@ -125,38 +125,15 @@ bool NewtonFraktalApp::Update() {
 void NewtonFraktalApp::drawFractal(){
 	const int xRes = res[0];
 	const int yRes = res[1];
-	int maxCon = 0, maxConO = 0;
-	int* most = (int*)calloc(1,sizeof(int));
-	for (int y = 0; y < fraktal->getHeight(); y++){
-		for (int x = 0; x < fraktal->getWidth(); x++){
-			if (genCL->typeRes[x + y * xRes] < 11){
-				maxConO = maxCon;
-				maxCon = MAX(maxCon, genCL->result[x + y * xRes]);
-				if (maxConO != maxCon){
-					most = (int*)realloc(most, maxCon*sizeof(int));
-					for (int i = maxConO + 1; i <= maxCon; i++){
-						most[i] = 0;
-					}
-				}
-				most[genCL->result[x + y * xRes]] = most[genCL->result[x + y * xRes]] + 1;
-			}
-		}
-	}
-
-	int mostMax = 0, mostMaxO = 0, mostMaxIdx = 0;
-	for (int i = 0; i < maxCon; i++){
-		mostMaxO = mostMax;
-		mostMax = MAX(mostMax, most[i]);
-		if (mostMax != mostMaxO)
-			mostMaxIdx = i;
-	}
 
 	for (int y = 0; y < fraktal->getHeight(); y++){
 		for (int x = 0; x < fraktal->getWidth(); x++){
-			int type, conDiv;
+			int type, it;
+			double conDiv;
 			if (genCL && genCL->err == CL_SUCCESS){
 				conDiv = genCL->result[x + y * xRes];
 				type = genCL->typeRes[x + y * xRes];
+				it = genCL->iterations[x + y * xRes];
 			} else {
 				type = 3;
 				conDiv = runNewton(std::complex<double>((double)((x - (double)(xRes / 2)) / zoom[0]), (double)((y - (double)(yRes / 2)) / zoom[1])), type);
@@ -165,14 +142,10 @@ void NewtonFraktalApp::drawFractal(){
 			if (type < 15){
 				Color col;
 				col.setColorHexRGB(colors[type]);
-				if ((conDiv * (1.0 / (mostMaxIdx + (maxCon - mostMaxIdx) / 4))) < 1){
-					col.setColorHSV(col.getHue(), col.getSaturation(), 1.0 - (conDiv * (1.0 / (mostMaxIdx + (maxCon - mostMaxIdx) / 4))));
-				} else {
-					col.setColorHSV(col.getHue(), col.getSaturation(), 1.0 - (conDiv * (1.0 / (maxCon))));
-				}
+				col.setColorHSV(col.getHue(), col.getSaturation(), 1-conDiv);
 				fraktal->setPixel(x, y, col);
 			} else {
-				fraktal->setPixel(x, y, (conDiv*0.0001), (conDiv*0.0001), (conDiv*0.0001), 1);
+				fraktal->setPixel(x, y, conDiv, conDiv, conDiv, 1);
 			}
 		}
 	}

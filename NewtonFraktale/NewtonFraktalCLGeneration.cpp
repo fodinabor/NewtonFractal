@@ -229,8 +229,9 @@ void NewtonFraktalCLGeneration::runNewton(cl_int* zoom, cl_int* res, cl_double* 
 		cl::Buffer zoomBuf(context, CL_MEM_READ_ONLY, 2 * sizeof(cl_int));
 		cl::Buffer centerBuf(context, CL_MEM_READ_ONLY, 2 * sizeof(cl_double));
 
-		result = (cl_int*)calloc(res[0] * res[1] + 1, sizeof(cl_int));
+		result = (cl_double*)calloc(res[0] * res[1] + 1, sizeof(cl_double));
 		typeRes = (cl_int*)calloc(res[0] * res[1] + 1, sizeof(cl_int));
+		iterations = (cl_int*)calloc(res[0] * res[1] + 1, sizeof(cl_int));
 
 		queue.enqueueWriteBuffer(resBuf, CL_TRUE, 0, 2 * sizeof(cl_int), res);
 		queue.enqueueWriteBuffer(zoomBuf, CL_TRUE, 0, 2 * sizeof(cl_int), zoom);
@@ -251,10 +252,12 @@ void NewtonFraktalCLGeneration::runNewton(cl_int* zoom, cl_int* res, cl_double* 
 		cl_int* offset = new cl_int[2];
 		offset[0] = 0;
 
-		cl::Buffer outBuf(context, CL_MEM_WRITE_ONLY, (res[0] * res[1] * sizeof(cl_int)));
+		cl::Buffer outBuf(context, CL_MEM_WRITE_ONLY, (res[0] * res[1] * sizeof(cl_double)));
 		cl::Buffer typeOutBuf(context, CL_MEM_WRITE_ONLY, (res[0] * res[1] * sizeof(cl_int)));
+		cl::Buffer itOutBuf(context, CL_MEM_WRITE_ONLY, (res[0] * res[1] * sizeof(cl_int)));
 		kernel.setArg(8, outBuf);
 		kernel.setArg(9, typeOutBuf);
+		kernel.setArg(10, itOutBuf);
 
 		for (int i = 0; i < 4; i++){
 			offset[0] = (res[0] / 4) * i;
@@ -274,8 +277,9 @@ void NewtonFraktalCLGeneration::runNewton(cl_int* zoom, cl_int* res, cl_double* 
 				queue.finish();
 			}
 		}
-		queue.enqueueReadBuffer(outBuf, CL_TRUE, 0, res[0] * res[1] * sizeof(cl_int), result);
+		queue.enqueueReadBuffer(outBuf, CL_TRUE, 0, res[0] * res[1] * sizeof(cl_double), result);
 		queue.enqueueReadBuffer(typeOutBuf, CL_TRUE, 0, res[0] * res[1] * sizeof(cl_int), typeRes);
+		queue.enqueueReadBuffer(itOutBuf, CL_TRUE, 0, res[0] * res[1] * sizeof(cl_int), iterations);
 	} catch (cl::Error& err) {
 		Logger::log("[OpenCL] ERROR: %s (%d)\n", err.what(), err.err());
 		this->err = err.err();

@@ -1,6 +1,6 @@
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 #define pi 3.14159265359
-#define RESOLUTION 0.00000001
+#define RESOLUTION 0.00001
 
 struct complex {
 	double im;
@@ -117,7 +117,7 @@ __kernel void findZeros(__global const int* res,
 __kernel void newtonFraktal(__global const int* res, __global const int* zoom, __global const int* offset,
 							__global const double* center, __global const struct complex *zeros,
 							__global const struct complex *params, __global const struct complex *paramsD, __global const int* paramc,
-							__global int* result, __global int* resType){
+							__global double* result, __global int* resType, __global int* iterations){
 	const int x = get_global_id(0) + offset[0];
 	const int y = get_global_id(1) + offset[1];
 	
@@ -128,15 +128,20 @@ __kernel void newtonFraktal(__global const int* res, __global const int* zoom, _
 	const double b = (double)((y - (double)(yRes / 2)) / zoom[1]) + center[1];
 
 	struct complex z = createComplexFromKarthes(a, b);
-	struct complex f, d, zo;
-
-	resType[x + xRes * y] = 11;
+	struct complex f, d, zo, zoo;
+	double iterexp = 0;
+	resType[x + xRes * y] = 14;
 
 	bool found = false;
 	int i = 0;
 	while (i < 6000 && fabs(z.r) < 10000 && !found){
 		f = computeFunction(z, params, paramc[0]);//addComplexScalar(powComplex(z, 4), 1);
 		d = computeFunction(z, paramsD, paramc[1]);//multComplexScalar(powComplex(z, 3), 3);
+
+		iterexp = iterexp + exp(-fabs(z.r) - 0.5 / (fabs(subComplex(zo, z).r)));
+
+		zoo = zo;
+		zo = z;
 
 		z = subComplex(z, divComplex(f, d));
 		
@@ -145,6 +150,7 @@ __kernel void newtonFraktal(__global const int* res, __global const int* zoom, _
 		for (int j = 0; j < paramc[0] - 1; j++){
 			if (compComplex(z, zeros[j], RESOLUTION)){
 				resType[x + xRes * y] = j;
+				result[x + xRes * y] = iterexp;//(log(RESOLUTION) - log(fabs(subComplex(zo, zeros[j]).r))) / (log(fabs(subComplex(z, zeros[j]).r)) - log(fabs(subComplex(zo, zeros[j]).r)));
 				found = true;
 				break;
 			}
@@ -154,16 +160,9 @@ __kernel void newtonFraktal(__global const int* res, __global const int* zoom, _
 			resType[x + xRes * y] = 12;
 			break;
 		}
-		// else if (compComplex(z, x3, 0.0000001)){
-		//	resType[x + xRes * y] = 2;
-		//	break;
-		//} else if (compComplex(z, x4, 0.0000001)){
-		//	resType[x + xRes * y] = 3;
-		//	break;
-		//}
 	}
 	if (fabs(z.r) >= 10000){
-		resType[x + xRes * y] = 12;
+		resType[x + xRes * y] = 15;
 	}
-	result[x + xRes * y] = i;
+	iterations[x + xRes * y] = i;
 }
