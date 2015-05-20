@@ -1,6 +1,6 @@
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 #define pi 3.14159265359
-#define RESOLUTION 0.00001
+#define RESOLUTION 0.0000000001
 
 struct complex {
 	double im;
@@ -128,19 +128,16 @@ __kernel void newtonFraktal(__global const int* res, __global const int* zoom, _
 	const double b = (double)((y - (double)(yRes / 2)) / zoom[1]) + center[1];
 
 	struct complex z = createComplexFromKarthes(a, b);
-	struct complex f, d, zo, zoo;
-	double iterexp = 0;
+	struct complex f, d, zo;
 	resType[x + xRes * y] = 14;
 
 	bool found = false;
 	int i = 0;
-	while (i < 6000 && fabs(z.r) < 10000 && !found){
-		f = computeFunction(z, params, paramc[0]);//addComplexScalar(powComplex(z, 4), 1);
-		d = computeFunction(z, paramsD, paramc[1]);//multComplexScalar(powComplex(z, 3), 3);
+	while (i < 6000 && fabs(z.r) < 100000 && !found){
+		f = computeFunction(z, params, paramc[0]);
+		d = computeFunction(z, paramsD, paramc[1]);
 
-		iterexp = iterexp + exp(-fabs(z.r) - 0.5 / (fabs(subComplex(zo, z).r)));
 
-		zoo = zo;
 		zo = z;
 
 		z = subComplex(z, divComplex(f, d));
@@ -150,14 +147,14 @@ __kernel void newtonFraktal(__global const int* res, __global const int* zoom, _
 		for (int j = 0; j < paramc[0] - 1; j++){
 			if (compComplex(z, zeros[j], RESOLUTION)){
 				resType[x + xRes * y] = j;
-				result[x + xRes * y] = iterexp;//(log(RESOLUTION) - log(fabs(subComplex(zo, zeros[j]).r))) / (log(fabs(subComplex(z, zeros[j]).r)) - log(fabs(subComplex(zo, zeros[j]).r)));
+				result[x + xRes * y] = (log(RESOLUTION) - log(subComplex(zo, zeros[j]).r)) / (log(subComplex(z, zeros[j]).r) - log(subComplex(zo, zeros[j]).r));
 				found = true;
 				break;
 			}
 		}
 
-		if (compComplex(z, zo, RESOLUTION/100)){
-			resType[x + xRes * y] = 12;
+		if (compComplex(z, zo, RESOLUTION/100) && !found){
+			resType[x + xRes * y] = 15;
 			break;
 		}
 	}

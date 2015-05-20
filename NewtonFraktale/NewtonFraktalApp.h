@@ -12,13 +12,19 @@ using namespace Polycode;
 
 cl_double mapCL(cl_double x, cl_double in_min, cl_double in_max, cl_double out_min, cl_double out_max);
 
+template<typename T>
+T clamp(const T &val, const T &min, const T &max)
+{
+	return max(min, min(max, val));
+}
+
 class NewtonFraktalApp : public EventHandler {
 public:
 	NewtonFraktalApp(PolycodeView *view);
 	~NewtonFraktalApp();
     
-	int runNewton(std::complex<double> z, int& type);
-	void findZeros(Polynom *pol, Polynom *der, std::complex<cl_double> z);
+	void runNewton(std::vector<double> &result, std::vector<double> &iterations, std::vector<int> &typeRes);
+	void findZeros();
 
 	void drawFractal();
 
@@ -31,17 +37,26 @@ private:
 	Scene *ui;
 
 	int* getMaxAndMin(int *data);
+	void redrawIt();
 
 	NewtonFraktalCLGeneration* genCL;
 	//NewtonFraktalCUDAGeneration *genCUDA;
 
 	Polynom* polynom;
 	Polynom* derivation;
+
+	std::vector<std::complex<cl_double>> zeros;
+
 	Image* fraktal;
 	SceneImage *sceneFraktal;
 
+	UIWindow* win;
 	UIButton *redraw;
 	UITextInput *zoomField;
+	UILabel* polyLabel;
+	UITextInput *polynomInput;
+	UIButton *redrawWinButton;
+	UIButton *openOptions;
 	SceneImage *centerSel;
 
 	cl_int *zoom;

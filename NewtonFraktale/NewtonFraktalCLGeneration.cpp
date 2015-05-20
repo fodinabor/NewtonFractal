@@ -118,6 +118,10 @@ void NewtonFraktalCLGeneration::initCLAndRunNewton(cl_int* zoom, cl_int* res){
 		program = cl::Program(context, source);
 		program.build(devices);
 
+		result = (cl_double*)malloc((res[0] * res[1] + 1) * sizeof(cl_double));
+		typeRes = (cl_int*)malloc((res[0] * res[1] + 1)* sizeof(cl_int));
+		iterations = (cl_int*)malloc((res[0] * res[1] + 1) * sizeof(cl_int));
+
 		runNewton(zoom, res);
 
 	} catch (cl::Error& err) {
@@ -229,10 +233,10 @@ void NewtonFraktalCLGeneration::runNewton(cl_int* zoom, cl_int* res, cl_double* 
 		cl::Buffer zoomBuf(context, CL_MEM_READ_ONLY, 2 * sizeof(cl_int));
 		cl::Buffer centerBuf(context, CL_MEM_READ_ONLY, 2 * sizeof(cl_double));
 
-		result = (cl_double*)calloc(res[0] * res[1] + 1, sizeof(cl_double));
-		typeRes = (cl_int*)calloc(res[0] * res[1] + 1, sizeof(cl_int));
-		iterations = (cl_int*)calloc(res[0] * res[1] + 1, sizeof(cl_int));
-
+		memset(result, 0, (res[0] * res[1] + 1) * sizeof(cl_double));
+		memset(typeRes, 0, (res[0] * res[1] + 1)* sizeof(cl_int));
+		memset(iterations, 0, (res[0] * res[1] + 1)* sizeof(cl_int));
+		
 		queue.enqueueWriteBuffer(resBuf, CL_TRUE, 0, 2 * sizeof(cl_int), res);
 		queue.enqueueWriteBuffer(zoomBuf, CL_TRUE, 0, 2 * sizeof(cl_int), zoom);
 		queue.enqueueWriteBuffer(zerosBuf, CL_TRUE, 0, (this->paramc[0] - 1) * sizeof(cl_complex), this->zeros);
