@@ -6,7 +6,6 @@
 #include "Polynom.h"
 #include "NewtonFraktalCLGeneration.h"
 #include <complex>
-//#include "NewtonFraktalCUDAGeneration.h"
 
 using namespace Polycode;
 
@@ -40,7 +39,6 @@ private:
 	void redrawIt();
 
 	NewtonFraktalCLGeneration* genCL;
-	//NewtonFraktalCUDAGeneration *genCUDA;
 
 	Polynom* polynom;
 	Polynom* derivation;
@@ -55,9 +53,14 @@ private:
 	UITextInput *zoomField;
 	UILabel* polyLabel;
 	UITextInput *polynomInput;
+	UILabel* center;
+	UITextInput *centerX;
+	UITextInput *centerY;
 	UIButton *redrawWinButton;
 	UIButton *openOptions;
 	SceneImage *centerSel;
+
+	bool centerDirty;
 
 	cl_int *zoom;
 	//cl_double* param;

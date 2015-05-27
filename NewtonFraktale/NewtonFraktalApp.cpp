@@ -106,6 +106,24 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 	win->addChild(polynomInput);
 	polynomInput->setPosition(12, 40);
 
+	center = new UILabel("Center:", 12);
+	win->addChild(center);
+	center->setPosition(12, 70);
+	
+	centerX = new UITextInput(false, 390, 15);
+	win->addChild(centerX);
+	centerX->setText("0");
+	centerX->setNumberOnly(true);
+	centerX->setPosition(12, 95);
+	centerX->addEventListener(this, UIEvent::CHANGE_EVENT);
+
+	centerY = new UITextInput(false, 390, 15);
+	win->addChild(centerY);
+	centerY->setText("0");
+	centerY->setNumberOnly(true);
+	centerY->setPosition(12, 120);
+	centerY->addEventListener(this, UIEvent::CHANGE_EVENT);
+
 	redrawWinButton = new UIButton("Draw", 40);
 	win->addChild(redrawWinButton);
 	redrawWinButton->setPosition(12, win->getHeight() - 40);
@@ -304,10 +322,14 @@ void NewtonFraktalApp::handleEvent(Event* e){
 	} else if (e->getDispatcher() == openOptions){
 		win->enabled = true;
 		win->visible = true;
+	} else if (e->getDispatcher() == centerX || e->getDispatcher() == centerY){
+		centerDirty = true;
 	} else if (e->getDispatcher() == core->getInput() && e->getEventCode() == InputEvent::EVENT_MOUSEUP) {
 		InputEvent* ie = (InputEvent*)e;
 		if (!redraw->mouseOver && !zoomField->getMouseOver() && !win->mouseOver && !openOptions->mouseOver){
 			centerSel->setPosition(ie->getMousePosition().x, ie->getMousePosition().y);
+			centerX->setText(String::NumberToString(mapCL((cl_double)centerSel->getPosition().x, 0, core->getXRes(), -(res[0]) / 2, (res[0]) / 2) / zoom[0] + this->centerCL[0], 6));
+			centerY->setText(String::NumberToString(mapCL((cl_double)centerSel->getPosition().y, 0, core->getYRes(), -(res[1]) / 2, (res[1]) / 2) / zoom[1] + this->centerCL[1], 6));
 			centerSel->visible = true;
 		}
 	} else if (e->getDispatcher() == core->getInput() && e->getEventCode() == InputEvent::EVENT_KEYDOWN) {
@@ -327,10 +349,20 @@ void NewtonFraktalApp::redrawIt(){
 		zoom[0] = zoomField->getText().toInteger();
 		zoom[1] = zoomField->getText().toInteger();
 	}
-	cl_int paramc[] = { polynom->getNumCoefficients(), derivation->getNumCoefficients() };
 	cl_double *center = new cl_double[2];
 	center[0] = mapCL((cl_double)centerSel->getPosition().x, 0, core->getXRes(), -(res[0]) / 2, (res[0]) / 2) / zoom[0] + this->centerCL[0];
 	center[1] = mapCL((cl_double)centerSel->getPosition().y, 0, core->getYRes(), -(res[1]) / 2, (res[1]) / 2) / zoom[1] + this->centerCL[1];
+	
+	if (centerDirty){
+		if (centerX->getText().isNumber()){
+			center[0] = centerX->getText().toNumber();
+		}
+		if (centerY->getText().isNumber()){
+			center[1] = centerY->getText().toNumber();
+		}
+		centerDirty = false;
+	}
+	cl_int paramc[] = { polynom->getNumCoefficients(), derivation->getNumCoefficients() };
 
 	genCL->runNewton(zoom, res, center, polynom->getCLCoefficients(), derivation->getCLCoefficients(), paramc);
 	this->centerCL = center;

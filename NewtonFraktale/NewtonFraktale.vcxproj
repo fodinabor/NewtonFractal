@@ -103,14 +103,12 @@ copy "newton.cl" "$(TargetDir)"</Command>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ComplexNumber.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="NewtonFraktalApp.cpp" />
     <ClCompile Include="NewtonFraktalCLGeneration.cpp" />
     <ClCompile Include="Polynom.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ComplexNumber.h" />
     <ClInclude Include="NewtonFraktalApp.h" />
     <ClInclude Include="NewtonFraktalCLGeneration.h" />
     <ClInclude Include="Polynom.h" />
