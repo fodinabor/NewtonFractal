@@ -68,7 +68,10 @@
     </Link>
     <PostBuildEvent>
       <Command>if not exist "$(TargetDir)default.pak" copy "Framework\Core\Assets\default.pak" "$(TargetDir)"
-copy "newton.cl" "$(TargetDir)"</Command>
+copy "newton.cl" "$(TargetDir)"
+copy "DeviceIcon.png" "$(TargetDir)"
+copy "OpenCLIcon.png" "$(TargetDir)"
+copy "CpuIcon.png" "$(TargetDir)"</Command>
     </PostBuildEvent>
     <CudaCompile>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
@@ -96,7 +99,10 @@ copy "newton.cl" "$(TargetDir)"</Command>
     </Link>
     <PostBuildEvent>
       <Command>if not exist "$(TargetDir)default.pak" copy "Framework\Core\Assets\default.pak" "$(TargetDir)"
-copy "newton.cl" "$(TargetDir)"</Command>
+copy "newton.cl" "$(TargetDir)"
+copy "DeviceIcon.png" "$(TargetDir)"
+copy "OpenCLIcon.png" "$(TargetDir)"
+copy "CpuIcon.png" "$(TargetDir)"</Command>
     </PostBuildEvent>
     <CudaCompile>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>

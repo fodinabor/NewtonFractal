@@ -6,6 +6,7 @@
 #include "Polynom.h"
 #include "NewtonFraktalCLGeneration.h"
 #include <complex>
+#include <ctime>
 
 using namespace Polycode;
 
@@ -66,4 +67,9 @@ private:
 	//cl_double* param;
 	cl_double* centerCL;
 	cl_int *res;
+
+	UITreeContainer* treeCont;
+	bool clOptionsSet;
+
+	clock_t begin, end;
 };

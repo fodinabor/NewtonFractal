@@ -24,7 +24,31 @@ struct cl_complex createComplexFromKarthes(cl_double real, cl_double imag){
 	return t;
 }
 
-NewtonFraktalCLGeneration::NewtonFraktalCLGeneration(cl_int* zoom, struct cl_complex* params, struct cl_complex* paramsD, cl_int* paramc, cl_int* res){
+NewtonFraktalCLGeneration::NewtonFraktalCLGeneration(){
+	err = CL_DEVICE_NOT_FOUND;
+
+	cl::Platform::get(&platforms);
+
+	if (platforms.size() == 0){
+		return;
+	}
+
+	std::string deviceName, vendor;
+	for (int i = 0; i < platforms.size(); i++){
+		platforms[i].getInfo(CL_PLATFORM_NAME, &vendor);
+		platformStrs.push_back(vendor);
+		cl::vector<cl::Device> pDevices;
+		platforms[i].getDevices(CL_DEVICE_TYPE_ALL, &pDevices);
+		std::vector<String> strs;
+		for (int j = 0; j < pDevices.size(); j++){
+			pDevices[j].getInfo<std::string>(CL_DEVICE_NAME, &deviceName);
+			strs.push_back(deviceName);
+		}
+		deviceStrs.push_back(strs);
+	}
+}
+
+void NewtonFraktalCLGeneration::initCLAndRunNewton(cl_int* zoom, cl_int* res, struct cl_complex* params, struct cl_complex* paramsD, cl_int* paramc, int userChoiceP, int userChoice){
 	this->params = params;
 	this->paramsD = paramsD;
 	this->paramc = paramc;
@@ -33,10 +57,6 @@ NewtonFraktalCLGeneration::NewtonFraktalCLGeneration(cl_int* zoom, struct cl_com
 	center[0] = 0;
 	center[1] = 0;
 
-	initCLAndRunNewton(zoom, res);
-}
-
-void NewtonFraktalCLGeneration::initCLAndRunNewton(cl_int* zoom, cl_int* res){
 	FILE* f;
 	if (fopen_s(&f, "newton.cl", "r") != 0){
 		return;
@@ -54,48 +74,7 @@ void NewtonFraktalCLGeneration::initCLAndRunNewton(cl_int* zoom, cl_int* res){
 
 	err = CL_SUCCESS;
 	try {
-		cl::vector<cl::Platform> platforms;
-		cl::Platform::get(&platforms);
-
-		if (platforms.size() == 0){
-			return;
-		}
-		
 		std::string deviceName, vendor;
-		Logger::log("[OpenCL] All Platorms:\n\n");
-		for (int i = 0; i < platforms.size(); i++){
-			platforms[i].getInfo(CL_PLATFORM_NAME, &vendor);
-			Logger::log("[%d] %s Devices:\n", i, vendor.c_str());
-			cl::vector<cl::Device> pDevices;
-			platforms[i].getDevices(CL_DEVICE_TYPE_ALL, &pDevices);
-			for (int j = 0; j < pDevices.size(); j++){
-				pDevices[j].getInfo<std::string>(CL_DEVICE_NAME, &deviceName);
-				Logger::log("[%d] %s\n", j, deviceName.c_str());
-			}
-			Logger::log("\n");
-		}
-
-		std::cout << "Please enter the platform you would like to use:" << std::endl;
-
-		int userChoice = 0, userChoiceP = 0;
-		std::cin >> userChoiceP;
-		if (userChoiceP < 0){
-			err = -1;
-			return;
-		}
-		if (userChoiceP > platforms.size()){
-			userChoiceP = 0;
-		}
-
-		std::cout << "Please enter the device you would like to use:" << std::endl;
-		std::cin >> userChoice;
-
-		cl::vector<cl::Device> pDevices;
-		platforms[userChoiceP].getDevices(CL_DEVICE_TYPE_ALL, &pDevices);
-
-		if (userChoice > pDevices.size()){
-			userChoice = 0;
-		}
 
 		cl_context_properties properties[] =
 		{ CL_CONTEXT_PLATFORM, (cl_context_properties)(platforms[userChoiceP])(), 0 };
