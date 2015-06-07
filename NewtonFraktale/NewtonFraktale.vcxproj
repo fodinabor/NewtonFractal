@@ -126,10 +126,8 @@ copy "CpuIcon.png" "$(TargetDir)"</Command>
     </Link>
     <PostBuildEvent>
       <Command>if not exist "$(TargetDir)default.pak" copy "Framework\Core\Assets\default.pak" "$(TargetDir)"
-copy "newton.cl" "$(TargetDir)"
-copy "DeviceIcon.png" "$(TargetDir)"
-copy "OpenCLIcon.png" "$(TargetDir)"
-copy "CpuIcon.png" "$(TargetDir)"</Command>
+if not exist "$(TargetDir)UIThemes.pak" copy "UIThemes.pak" "$(TargetDir)"
+copy "newton.cl" "$(TargetDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -182,10 +180,8 @@ copy "CpuIcon.png" "$(TargetDir)"</Command>
     </Link>
     <PostBuildEvent>
       <Command>if not exist "$(TargetDir)default.pak" copy "Framework\Core\Assets\default.pak" "$(TargetDir)"
-copy "newton.cl" "$(TargetDir)"
-copy "DeviceIcon.png" "$(TargetDir)"
-copy "OpenCLIcon.png" "$(TargetDir)"
-copy "CpuIcon.png" "$(TargetDir)"</Command>
+if not exist "$(TargetDir)UIThemes.pak" copy "UIThemes.pak" "$(TargetDir)"
+copy "newton.cl" "$(TargetDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
