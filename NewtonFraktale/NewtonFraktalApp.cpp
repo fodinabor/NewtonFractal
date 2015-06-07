@@ -77,20 +77,20 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 	ui->getDefaultCamera()->setOrthoSize(core->getXRes(), core->getYRes());
 	ui->rootEntity.processInputEvents = true;
 	
-	treeCont = new UITreeContainer("OpenCLIcon.png", "OpenCL Devices", 500, core->getYRes());
+	treeCont = new UITreeContainer("UIThemes/OpenCLIcon.png", "OpenCL Devices", 500, core->getYRes());
 	ui->addChild(treeCont);
 	treeCont->getRootNode()->addEventListener(this, UITreeEvent::EXECUTED_EVENT);
 	
 	for (int i = 0; i < genCL->platformStrs.size(); i++){
 		UITree* plat = treeCont->getRootNode()->addTreeChild(Services()->getConfig()->getStringValue("Polycode","uiFileBrowserFolderIcon"), genCL->platformStrs[i], (void*)i);
 		for (int j = 0; j < genCL->deviceStrs[i].size(); j++){
-			plat->addTreeChild("DeviceIcon.png", genCL->deviceStrs[i][j], (void*)j);
+			plat->addTreeChild("UIThemes/DeviceIcon.png", genCL->deviceStrs[i][j], (void*)j);
 		}
 		plat->toggleCollapsed();
 	}
 	treeCont->getRootNode()->toggleCollapsed();
 
-	treeCont->getRootNode()->addTreeChild("CpuIcon.png", "No OpenCL (SLOW!! Consider installing an OpenCL Driver!)", (void*)-1);
+	treeCont->getRootNode()->addTreeChild("UIThemes/CpuIcon.png", "No OpenCL (SLOW!! Consider installing an OpenCL Driver!)", (void*)-1);
 	
 	Image *centerSelector = new Image(20, 20);
 	centerSelector->fill(Color(0.0, 0.0, 0.0, 0.0));
