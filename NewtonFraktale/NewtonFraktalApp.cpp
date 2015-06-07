@@ -11,9 +11,9 @@ int colors[] = {
 	0x0000FF,
 	0x00FF00,
 	0xFF0000,
+	0xFFFF00,
 	0x00FFFF,
 	0xFF00FF,
-	0xFFFF00,
 	0x88FF00,
 	0x88FF88,
 	0xFF88FF,
@@ -157,7 +157,8 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 
 	zoomField = new UITextInput(false, 70, 15);
 	zoomField->setNumberOnly(true);
-	ui->addChild(zoomField);
+	zoomField->setPosition(12, 145);
+	win->addChild(zoomField);
 	zoomField->enabled = false;
 	zoomField->visible = false;
 }
@@ -356,7 +357,7 @@ void NewtonFraktalApp::handleEvent(Event* e){
 		
 #ifdef _WINDOWS
 		MSG Msg;
-		while (PeekMessage(&Msg, NULL, 0, 0, PM_REMOVE)) {}
+		for (int i = 0; i < 100; i++){ PeekMessage(&Msg, NULL, 0, 0, PM_REMOVE); }
 #endif
 
 		core->getInput()->addEventListener(this, InputEvent::EVENT_MOUSEUP);
@@ -386,7 +387,7 @@ void NewtonFraktalApp::handleEvent(Event* e){
 		centerDirty = true;
 	} else if (e->getDispatcher() == core->getInput() && e->getEventCode() == InputEvent::EVENT_MOUSEUP) {
 		InputEvent* ie = (InputEvent*)e;
-		if (!redraw->mouseOver && !zoomField->getMouseOver() && !win->mouseOver && !openOptions->mouseOver && clOptionsSet){
+		if (!redraw->mouseOver && /*!zoomField->getMouseOver() &&*/ !win->mouseOver && !openOptions->mouseOver && clOptionsSet){
 			centerSel->setPosition(ie->getMousePosition().x, ie->getMousePosition().y);
 			centerX->setText(String::NumberToString(mapCL((cl_double)centerSel->getPosition().x, 0, core->getXRes(), -(res[0]) / 2, (res[0]) / 2) / zoom[0] + this->centerCL[0], 6));
 			centerY->setText(String::NumberToString(mapCL((cl_double)centerSel->getPosition().y, 0, core->getYRes(), -(res[1]) / 2, (res[1]) / 2) / zoom[1] + this->centerCL[1], 6));
