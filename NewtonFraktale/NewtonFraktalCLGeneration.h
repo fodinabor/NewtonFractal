@@ -9,9 +9,9 @@ public:
 	NewtonFraktalCLGeneration();
 	~NewtonFraktalCLGeneration();
 	
-	void initCLAndRunNewton(cl_int* zoom, cl_int* res, struct cl_complex* params, struct cl_complex* paramsD, cl_int* paramc, int userChoiceP, int userChoice);
+	void initCLAndRunNewton(cl_double* zoom, cl_int* res, struct cl_complex* params, struct cl_complex* paramsD, cl_int* paramc, int userChoiceP, int userChoice);
 	void calcZeros();
-	void runNewton(cl_int* zoom, cl_int* res, cl_double* center = NULL, struct cl_complex* params = NULL, struct cl_complex* paramsD = NULL, cl_int* paramc = NULL);
+	void runNewton(cl_double* zoom, cl_int* res, cl_double* center = NULL, struct cl_complex* params = NULL, struct cl_complex* paramsD = NULL, cl_int* paramc = NULL);
 
 	cl_double* result;
 	cl_int* iterations;

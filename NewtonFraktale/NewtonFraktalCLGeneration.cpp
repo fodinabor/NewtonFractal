@@ -48,7 +48,7 @@ NewtonFraktalCLGeneration::NewtonFraktalCLGeneration(){
 	}
 }
 
-void NewtonFraktalCLGeneration::initCLAndRunNewton(cl_int* zoom, cl_int* res, struct cl_complex* params, struct cl_complex* paramsD, cl_int* paramc, int userChoiceP, int userChoice){
+void NewtonFraktalCLGeneration::initCLAndRunNewton(cl_double* zoom, cl_int* res, struct cl_complex* params, struct cl_complex* paramsD, cl_int* paramc, int userChoiceP, int userChoice){
 	this->params = params;
 	this->paramsD = paramsD;
 	this->paramc = paramc;
@@ -173,6 +173,7 @@ void NewtonFraktalCLGeneration::calcZeros(){
 		this->zeros = (cl_complex*)calloc(zerosCompl.size(), sizeof(cl_complex));
 		for (int i = 0; i < zerosCompl.size(); i++){
 			this->zeros[i] = createComplexFromKarthes(zerosCompl[i].real(),zerosCompl[i].imag());
+			Logger::log("Zero %d: (%f|%f)\n", i, this->zeros[i].re, this->zeros[i].im);
 		}
 
 	} catch (cl::Error& err) {
@@ -181,7 +182,7 @@ void NewtonFraktalCLGeneration::calcZeros(){
 	}
 }
 
-void NewtonFraktalCLGeneration::runNewton(cl_int* zoom, cl_int* res, cl_double* center, struct cl_complex* params, struct cl_complex* paramsD, cl_int* paramc){
+void NewtonFraktalCLGeneration::runNewton(cl_double* zoom, cl_int* res, cl_double* center, struct cl_complex* params, struct cl_complex* paramsD, cl_int* paramc){
 	if (paramc != NULL){
 		this->params = params;
 		this->paramsD = paramsD;
@@ -209,7 +210,7 @@ void NewtonFraktalCLGeneration::runNewton(cl_int* zoom, cl_int* res, cl_double* 
 		cl::Buffer paramsDBuf(context, CL_MEM_READ_ONLY, this->paramc[1] * sizeof(cl_complex));
 		cl::Buffer paramcBuf(context, CL_MEM_READ_ONLY, 2 * sizeof(cl_int));
 		cl::Buffer offsetBuf(context, CL_MEM_READ_ONLY, 2 * sizeof(cl_int));
-		cl::Buffer zoomBuf(context, CL_MEM_READ_ONLY, 2 * sizeof(cl_int));
+		cl::Buffer zoomBuf(context, CL_MEM_READ_ONLY, 2 * sizeof(cl_double));
 		cl::Buffer centerBuf(context, CL_MEM_READ_ONLY, 2 * sizeof(cl_double));
 
 		memset(result, 0, (res[0] * res[1] + 1) * sizeof(cl_double));
@@ -217,7 +218,7 @@ void NewtonFraktalCLGeneration::runNewton(cl_int* zoom, cl_int* res, cl_double* 
 		memset(iterations, 0, (res[0] * res[1] + 1)* sizeof(cl_int));
 		
 		queue.enqueueWriteBuffer(resBuf, CL_TRUE, 0, 2 * sizeof(cl_int), res);
-		queue.enqueueWriteBuffer(zoomBuf, CL_TRUE, 0, 2 * sizeof(cl_int), zoom);
+		queue.enqueueWriteBuffer(zoomBuf, CL_TRUE, 0, 2 * sizeof(cl_double), zoom);
 		queue.enqueueWriteBuffer(zerosBuf, CL_TRUE, 0, (this->paramc[0] - 1) * sizeof(cl_complex), this->zeros);
 		queue.enqueueWriteBuffer(paramsBuf, CL_TRUE, 0, this->paramc[0] * sizeof(cl_complex), this->params);
 		queue.enqueueWriteBuffer(paramsDBuf, CL_TRUE, 0, this->paramc[1] * sizeof(cl_complex), this->paramsD);

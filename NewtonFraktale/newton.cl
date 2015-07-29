@@ -114,7 +114,7 @@ __kernel void findZeros(__global const int* res,
 	out[x + y*res[0]] = createComplexFromKarthes(100000, 100000);
 }
 
-__kernel void newtonFraktal(__global const int* res, __global const int* zoom, __global const int* offset,
+__kernel void newtonFraktal(__global const int* res, __global const double* zoom, __global const int* offset,
 							__global const double* center, __global const struct complex *zeros,
 							__global const struct complex *params, __global const struct complex *paramsD, __global const int* paramc,
 							__global double* result, __global int* resType, __global int* iterations){
@@ -124,8 +124,10 @@ __kernel void newtonFraktal(__global const int* res, __global const int* zoom, _
 	const int xRes = res[0];
 	const int yRes = res[1];
 	
-	const double a = (double)((x - (double)(xRes / 2)) / zoom[0]) + center[0];
-	const double b = (double)((y - (double)(yRes / 2)) / zoom[1]) + center[1];
+	//const double a = (double)((x - (double)(xRes / 2)) / zoom[0]) + center[0];
+	const double a = (double)(zoom[0] * ((double)x - ((double)xRes / 2.0))) / xRes + center[0];
+	//const double b = (double)((y - (double)(yRes / 2)) / zoom[1]) + center[1];
+	const double b = (double)(zoom[1] * ((double)y - ((double)yRes / 2.0))) / yRes + center[1];
 
 	struct complex z = createComplexFromKarthes(a, b);
 	struct complex f, d, zo;
@@ -154,12 +156,12 @@ __kernel void newtonFraktal(__global const int* res, __global const int* zoom, _
 		}
 
 		if (compComplex(z, zo, RESOLUTION/100) && !found){
-			resType[x + xRes * y] = 15;
+			resType[x + xRes * y] = 20;
 			break;
 		}
 	}
 	if (fabs(z.r) >= 10000){
-		resType[x + xRes * y] = 15;
+		resType[x + xRes * y] = 20;
 	}
 	iterations[x + xRes * y] = i;
 }

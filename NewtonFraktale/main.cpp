@@ -7,7 +7,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 #ifdef _DEBUG
 	PolycodeView *view = new PolycodeView(hInstance, nCmdShow, L"NewtonFraktale", false, true);
 #else
-	PolycodeView *view = new PolycodeView(hInstance, nCmdShow, L"NewtonFraktale", false, false);
+	PolycodeView *view = new PolycodeView(hInstance, nCmdShow, L"NewtonFraktale", false, true);
 #endif
 	NewtonFraktalApp *app = new NewtonFraktalApp(view);
 

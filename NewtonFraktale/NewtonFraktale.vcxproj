@@ -71,8 +71,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>D:\Programmierung\NewtonFraktale\NewtonFraktale\Framework\Modules\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\Programmierung\NewtonFraktale\NewtonFraktale\Framework\Modules\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\Programmierung\NewtonFraktale\NewtonFraktale\Framework64\Modules\include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\Programmierung\NewtonFraktale\NewtonFraktale\Framework64\Modules\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -81,8 +81,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>D:\Programmierung\NewtonFraktale\NewtonFraktale\Framework\Modules\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\Programmierung\NewtonFraktale\NewtonFraktale\Framework\Modules\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\Programmierung\NewtonFraktale\NewtonFraktale\Framework64\Modules\include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\Programmierung\NewtonFraktale\NewtonFraktale\Framework64\Modules\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -102,10 +102,8 @@
     </Link>
     <PostBuildEvent>
       <Command>if not exist "$(TargetDir)default.pak" copy "Framework\Core\Assets\default.pak" "$(TargetDir)"
-copy "newton.cl" "$(TargetDir)"
-copy "DeviceIcon.png" "$(TargetDir)"
-copy "OpenCLIcon.png" "$(TargetDir)"
-copy "CpuIcon.png" "$(TargetDir)"</Command>
+copy UIThemes.pak "$(TargetDir)"
+copy "newton.cl" "$(TargetDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -116,16 +114,16 @@ copy "CpuIcon.png" "$(TargetDir)"</Command>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>Framework\Core\Dependencies\include\AL;Framework\Core\Dependencies\include;Framework\Core\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Framework64\Core\Dependencies\include\AL;Framework64\Core\Dependencies\include;Framework64\Core\Dependencies\include\freetype2;Framework64\Core\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>Framework\Core\Dependencies\lib;Framework\Core\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>Framework64\Core\Dependencies\lib;Framework64\Core\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>Polycore_d.lib;PolycodeUI_d.lib;zlibd.lib;freetype_d.lib;liboggd.lib;libvorbisd.lib;libvorbisfiled.lib;OpenAL32d.lib;physfsd.lib;libpng15_staticd.lib;opengl32.lib;glu32.lib;winmm.lib;ws2_32.lib;OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>if not exist "$(TargetDir)default.pak" copy "Framework\Core\Assets\default.pak" "$(TargetDir)"
+      <Command>if not exist "$(TargetDir)default.pak" copy "Framework64\Core\Assets\default.pak" "$(TargetDir)"
 if not exist "$(TargetDir)UIThemes.pak" copy "UIThemes.pak" "$(TargetDir)"
 copy "newton.cl" "$(TargetDir)"</Command>
     </PostBuildEvent>
@@ -152,10 +150,8 @@ copy "newton.cl" "$(TargetDir)"</Command>
     </Link>
     <PostBuildEvent>
       <Command>if not exist "$(TargetDir)default.pak" copy "Framework\Core\Assets\default.pak" "$(TargetDir)"
-copy "newton.cl" "$(TargetDir)"
-copy "DeviceIcon.png" "$(TargetDir)"
-copy "OpenCLIcon.png" "$(TargetDir)"
-copy "CpuIcon.png" "$(TargetDir)"</Command>
+copy UIThemes.pak "$(TargetDir)"
+copy "newton.cl" "$(TargetDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -168,18 +164,18 @@ copy "CpuIcon.png" "$(TargetDir)"</Command>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>Framework\Core\Dependencies\include\AL;Framework\Core\Dependencies\include;Framework\Core\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Framework64\Core\Dependencies\include\AL;Framework64\Core\Dependencies\include;Framework64\Core\Dependencies\include\freetype2;Framework64\Core\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>Framework\Core\Dependencies\lib;Framework\Core\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>Framework64\Core\Dependencies\lib;Framework64\Core\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>Polycore.lib;PolycodeUI.lib;zlib.lib;freetype.lib;libogg.lib;libvorbis.lib;libvorbisfile.lib;OpenAL32.lib;physfs.lib;libpng15_static.lib;opengl32.lib;glu32.lib;winmm.lib;ws2_32.lib;OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>if not exist "$(TargetDir)default.pak" copy "Framework\Core\Assets\default.pak" "$(TargetDir)"
+      <Command>if not exist "$(TargetDir)default.pak" copy "Framework64\Core\Assets\default.pak" "$(TargetDir)"
 if not exist "$(TargetDir)UIThemes.pak" copy "UIThemes.pak" "$(TargetDir)"
 copy "newton.cl" "$(TargetDir)"</Command>
     </PostBuildEvent>

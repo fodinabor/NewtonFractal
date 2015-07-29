@@ -60,10 +60,16 @@ private:
 	UIButton *redrawWinButton;
 	UIButton *openOptions;
 	SceneImage *centerSel;
+	UILabel* zoomL;
+
+	SceneImage *zoomSel;
+	bool dragging;
+	Vector2 startPoint;
 
 	bool centerDirty;
 
-	cl_int *zoom;
+	double ratio;
+	cl_double *zoom;
 	//cl_double* param;
 	cl_double* centerCL;
 	cl_int *res;
