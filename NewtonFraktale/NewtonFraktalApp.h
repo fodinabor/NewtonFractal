@@ -9,6 +9,7 @@
 #include <ctime>
 
 using namespace Polycode;
+#define RESOLUTION 0.0000000001
 
 cl_double mapCL(cl_double x, cl_double in_min, cl_double in_max, cl_double out_min, cl_double out_max);
 

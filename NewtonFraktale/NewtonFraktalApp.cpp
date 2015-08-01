@@ -61,8 +61,8 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 	derivation->printPolynom();
 
 	res = new cl_int[2];
-	res[0] = core->getXRes() * 2;
-	res[1] = core->getYRes() * 2;
+	res[0] = core->getXRes() * 4;
+	res[1] = core->getYRes() * 4;
 
 	ratio = (double)res[1] / (double)res[0];
 
@@ -165,12 +165,10 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 	redraw = new UIButton("Redraw", 60);
 	redraw->setPositionX(85);
 	redraw->addEventListener(this, UIEvent::CLICK_EVENT);
-	//ui->addChild(redraw);
 	redraw->enabled = false;
 	redraw->visible = false;
 
 	openOptions = new UIButton("Options", 60);
-	//openOptions->setPositionX(155);
 	openOptions->addEventListener(this, UIEvent::CLICK_EVENT);
 	ui->addChild(openOptions);
 	openOptions->enabled = false;
@@ -262,8 +260,8 @@ void NewtonFraktalApp::drawFractal(){
 	maxIters = maxIters / ((double)polynom->getNumCoefficients() / ((double)polynom->getNumCoefficients()/3.0));
 	Logger::log("x: %f, y: %f\n", (double)(zoom[0] * ((double)0 - ((double)res[0] / 2.0)) + centerCL[0]) / (res[0]), (double)(zoom[1] * ((double)0 - ((double)res[1] / 2.0)) + centerCL[1]) / (res[1]));
 	Logger::log("x: %f, y: %f\n", (double)(zoom[0] * ((double)res[0] - ((double)res[0] / 2.0)) + centerCL[0]) / (res[0]), (double)(zoom[1] * ((double)res[1] - ((double)res[1] / 2.0)) + centerCL[1]) / (res[1]));
-	for (int y = 0; y < fraktal->getHeight(); y++){
-		for (int x = 0; x < fraktal->getWidth(); x++){
+	for (int y = 0; y < yRes; y++){
+		for (int x = 0; x < xRes; x++){
 			int type;
 			double conDiv, it;
 			if (cl){
@@ -348,35 +346,45 @@ void NewtonFraktalApp::findZeros(){
 
 void NewtonFraktalApp::runNewton(std::vector<double> &result, std::vector<double> &iterations, std::vector<int> &typeRes){
 	std::complex<double> z, zo, p, d;
+	const int xRes = res[0];
+	const int yRes = res[1];
 	
-	for (int y = -res[1] / 2; y < res[1] / 2; y++){
-		for (int x = -res[0] / 2; x < res[0] / 2; x++){
-			//z = complex<double>(x / zoom[0] + centerCL[0], y / zoom[1] + centerCL[1]);
-			z = complex<double>((double)(zoom[0] * ((double)x - ((double)res[0] / 2.0)) + centerCL[0]), (double)(zoom[1] * ((double)y - ((double)res[1] / 2.0)) + centerCL[1]));
-			int i = 0;
-			bool found = false;
-			while (i < 6000 && abs(z) < 100000 && !found){
-				zo = z;
-				z = z - polynom->getValue(z)/derivation->getValue(z);
+	for (int y = 0; y < res[1]; y++){
+		for (int x = 0; x < res[0]; x++){
+			const double a = (double)zoom[0] * ((double)x - ((double)xRes / 2.0)) / xRes + centerCL[0];
+			const double b = (double)zoom[1] * ((double)y - ((double)yRes / 2.0)) / yRes + centerCL[1];
 
-				for (int j = 0; j < zeros.size(); j++){
-					if (compComplex(z, zeros[j], 0.00000001)){
-						typeRes.push_back(j);
-						result.push_back((log(0.00000001) - log(abs(zo- zeros[j]))) / (log(abs(z- zeros[j])) - log(abs(zo-zeros[j]))));
+			z = complex<double>(a, b);
+			typeRes.push_back(19);
+
+			bool found = false;
+			int i = 0;
+			while (i < 6000 && abs(z) < 100000 && !found) {
+				p = polynom->getValue(z);
+				d = derivation->getValue(z);
+				
+				zo = z;
+
+				z = z - p / d;
+
+				i++;
+
+				for (int j = 0; j < polynom->getNumCoefficients() - 1; j++) {
+					if (compComplex(z, zeros[j], RESOLUTION)) {
+						typeRes[typeRes.size()-1] = j;
+						result.push_back((log(RESOLUTION) - log(abs(zo-zeros[j]))) / (log(abs(z-zeros[j])) - log(abs(zo-zeros[j]))));
 						found = true;
 						break;
 					}
 				}
 
-				if (compComplex(z, zo, 0.000000000000001) && !found){
-					typeRes.push_back(15);
-					result.push_back(0);
+				if (compComplex(z, zo, RESOLUTION / 10) && !found) {
+					typeRes[typeRes.size()-1] = 20;
 					break;
 				}
 			}
-			if (!found){
-				result.push_back(0);
-				typeRes.push_back(15);
+			if (abs(z) >= 10000) {
+				typeRes[typeRes.size()-1] = 20;
 			}
 			iterations.push_back(i);
 		}
