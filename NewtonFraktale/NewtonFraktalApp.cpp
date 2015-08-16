@@ -61,8 +61,8 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 	derivation->printPolynom();
 
 	res = new cl_int[2];
-	res[0] = core->getXRes() * 4;
-	res[1] = core->getYRes() * 4;
+	res[0] = core->getXRes() * 2;
+	res[1] = core->getYRes() * 2;
 
 	ratio = (double)res[1] / (double)res[0];
 
@@ -80,6 +80,9 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 
 	scene = new Scene(Scene::SCENE_2D);
 	scene->getDefaultCamera()->setOrthoSize(res[0], res[1]);
+
+	selScene = new Scene(Scene::SCENE_2D_TOPLEFT);
+	selScene->getDefaultCamera()->setOrthoSize(core->getXRes(), core->getYRes());
 
 	ui = new Scene(Scene::SCENE_2D_TOPLEFT);
 	ui->getDefaultCamera()->setOrthoSize(core->getXRes(), core->getYRes());
@@ -122,7 +125,7 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 	zoomSel->blendingMode = Renderer::BLEND_MODE_NORMAL;
 	zoomSel->visible = false;
 	zoomSel->setPosition(core->getXRes() / 2 - zoomSel->getWidth(), core->getYRes() / 2 - zoomSel->getHeight());
-	ui->addEntity(zoomSel);
+	selScene->addEntity(zoomSel);
 
 	win = new UIWindow("Redraw Options", 400, 300);
 	win->setPosition(core->getXRes() / 2 - win->getWidth() / 2, core->getYRes() / 2 - win->getHeight() / 2);
@@ -178,12 +181,13 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 	zoomL->setPosition(12, 160);
 	win->addChild(zoomL);
 
-	zoomField = new UITextInput(false, 70, 15);
+	zoomField = new UITextInput(false, 390, 15);
 	zoomField->setNumberOnly(true);
 	zoomField->setPosition(12, 180);
 	win->addChild(zoomField);
 	zoomField->enabled = false;
 	zoomField->visible = false;
+	zoomField->setText(String::NumberToString(zoom[0]));
 
 	dragging = false;
 }
@@ -201,7 +205,7 @@ bool NewtonFraktalApp::Update() {
 		zoomSelector->fillRect(zoomSelector->getWidth()-3, 0, 3, zoomSelector->getHeight(), Color(1.0, 0.0, 0.0, 1.0));
 		zoomSelector->fillRect(0, zoomSelector->getHeight()-3, zoomSelector->getWidth(), 3, Color(1.0, 0.0, 0.0, 1.0));
 
-		ui->removeEntity(zoomSel);
+		selScene->removeEntity(zoomSel);
 		delete zoomSel;
 
 		zoomSel = new SceneImage(zoomSelector);
@@ -213,9 +217,17 @@ bool NewtonFraktalApp::Update() {
 			zoomSel->setPosition(startPoint.x - zoomSel->getWidth() / 2, startPoint.y - zoomSel->getHeight() / 2);
 		}
 
-		ui->addEntity(zoomSel);
+		selScene->addEntity(zoomSel);
 	}
-	return core->updateAndRender();
+	bool update = core->updateAndRender();
+	
+	if (clOptionsSet) {
+		core->getInput()->addEventListener(this, InputEvent::EVENT_MOUSEUP);
+		core->getInput()->addEventListener(this, InputEvent::EVENT_MOUSEDOWN);
+		core->getInput()->addEventListener(this, InputEvent::EVENT_KEYDOWN);
+	}
+	
+	return update;
 }
 
 void NewtonFraktalApp::drawFractal(){
@@ -418,13 +430,13 @@ void NewtonFraktalApp::handleEvent(Event* e){
 		
 #ifdef _WINDOWS
 		MSG Msg;
-		for (int i = 0; i < 100; i++){ PeekMessage(&Msg, NULL, 0, 0, PM_REMOVE); }
+		while (PeekMessage(&Msg, NULL, 0, 0, PM_REMOVE)) {
+			TranslateMessage(&Msg);
+			DispatchMessage(&Msg);
+		}
+		Update();
 #endif
 
-		core->getInput()->addEventListener(this, InputEvent::EVENT_MOUSEUP);
-		core->getInput()->addEventListener(this, InputEvent::EVENT_MOUSEDOWN);
-		core->getInput()->addEventListener(this, InputEvent::EVENT_KEYDOWN);
-		
 		clOptionsSet = true;
 	}
 	

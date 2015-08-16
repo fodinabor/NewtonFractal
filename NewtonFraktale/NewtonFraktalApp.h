@@ -36,6 +36,7 @@ private:
     Core *core;
 	Scene *scene;
 	Scene *ui;
+	Scene *selScene;
 
 	int* getMaxAndMin(int *data);
 	void redrawIt();
