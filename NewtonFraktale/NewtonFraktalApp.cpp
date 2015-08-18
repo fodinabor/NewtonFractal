@@ -30,7 +30,7 @@ int colors[] = {
 };
 
 NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
-	core = new POLYCODE_CORE(view, 1500, 1000, false, false, 0, 0, 10);
+	core = new POLYCODE_CORE(view, 1000, 750, false, false, 0, 0, 20);
 	Services()->getRenderer()->setClearColor(0, 0, 0, 1);
 	CoreServices::getInstance()->getResourceManager()->addArchive("default.pak");
 	CoreServices::getInstance()->getResourceManager()->addDirResource("default", false);
@@ -188,6 +188,7 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 	zoomField->enabled = false;
 	zoomField->visible = false;
 	zoomField->setText(String::NumberToString(zoom[0]));
+	zoomField->addEventListener(this, UIEvent::CHANGE_EVENT);
 
 	dragging = false;
 }
@@ -195,36 +196,58 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 NewtonFraktalApp::~NewtonFraktalApp() { }
 
 bool NewtonFraktalApp::Update() {
-	if (dragging){
-		double size = max(abs(Services()->getInput()->mousePosition.x - startPoint.x), abs(Services()->getInput()->mousePosition.y - startPoint.y));
-		
-		Image *zoomSelector = new Image(size, size * ratio);
-		zoomSelector->fill(Color(0.0, 0.0, 0.0, 0.0));
-		zoomSelector->fillRect(0, 0, zoomSelector->getWidth(), 3, Color(1.0, 0.0, 0.0, 1.0));
-		zoomSelector->fillRect(0, 0, 3, zoomSelector->getHeight(), Color(1.0, 0.0, 0.0, 1.0));
-		zoomSelector->fillRect(zoomSelector->getWidth()-3, 0, 3, zoomSelector->getHeight(), Color(1.0, 0.0, 0.0, 1.0));
-		zoomSelector->fillRect(0, zoomSelector->getHeight()-3, zoomSelector->getWidth(), 3, Color(1.0, 0.0, 0.0, 1.0));
-
-		selScene->removeEntity(zoomSel);
-		delete zoomSel;
-
-		zoomSel = new SceneImage(zoomSelector);
-		zoomSel->blendingMode = Renderer::BLEND_MODE_NORMAL;
-		zoomSel->visible = true;
-		if (Services()->getInput()->mousePosition.x - startPoint.x > 0 || Services()->getInput()->mousePosition.y - startPoint.y > 0){
-			zoomSel->setPosition(startPoint.x + zoomSel->getWidth() / 2, startPoint.y + zoomSel->getHeight() / 2);
-		} else {
-			zoomSel->setPosition(startPoint.x - zoomSel->getWidth() / 2, startPoint.y - zoomSel->getHeight() / 2);
+	if (dragging || (centerDirty && zoomSel->visible)) {
+		double size;
+		if (dragging) {
+			size = max(abs(Services()->getInput()->mousePosition.x - startPoint.x), abs(Services()->getInput()->mousePosition.y - startPoint.y));
+		} else if (centerDirty) {
+			size = mapCL((cl_double)zoomField->getText().toNumber(), 0, zoom[0], 0, core->getXRes());
 		}
 
-		selScene->addEntity(zoomSel);
+		if (size * (size * ratio) * 3 < MAXINT) {
+			Image *zoomSelector = new Image(size, size * ratio);
+			zoomSelector->fill(Color(0.0, 0.0, 0.0, 0.0));
+			zoomSelector->fillRect(0, 0, zoomSelector->getWidth(), 3, Color(1.0, 0.0, 0.0, 1.0));
+			zoomSelector->fillRect(0, 0, 3, zoomSelector->getHeight(), Color(1.0, 0.0, 0.0, 1.0));
+			zoomSelector->fillRect(zoomSelector->getWidth() - 3, 0, 3, zoomSelector->getHeight(), Color(1.0, 0.0, 0.0, 1.0));
+			zoomSelector->fillRect(0, zoomSelector->getHeight() - 3, zoomSelector->getWidth(), 3, Color(1.0, 0.0, 0.0, 1.0));
+
+			selScene->removeEntity(zoomSel);
+			delete zoomSel;
+
+			zoomSel = new SceneImage(zoomSelector);
+			zoomSel->blendingMode = Renderer::BLEND_MODE_NORMAL;
+			zoomSel->visible = true;
+			selScene->addEntity(zoomSel);
+
+			if (dragging) {
+				if (Services()->getInput()->mousePosition.x - startPoint.x > 0) {
+					zoomSel->setPositionX(startPoint.x + zoomSel->getWidth() / 2);
+				} else {
+					zoomSel->setPositionX(startPoint.x - zoomSel->getWidth() / 2);
+				}
+
+				if (Services()->getInput()->mousePosition.y - startPoint.y > 0) {
+					zoomSel->setPositionY(startPoint.y + zoomSel->getHeight() / 2);
+				} else {
+					zoomSel->setPositionY(startPoint.y - zoomSel->getHeight() / 2);
+				}
+			} else if (centerDirty) {
+				double x = mapCL((cl_double)centerX->getText().toNumber() - this->centerCL[0], -(zoom[0]) / 2, (zoom[0]) / 2, 0, core->getXRes());
+				double y = mapCL((cl_double)-(centerY->getText().toNumber() - this->centerCL[1]), -(zoom[1]) / 2, (zoom[1]) / 2, 0, core->getYRes());
+				zoomSel->setPosition(x, y);
+				centerDirty = false;
+			}
+		}
 	}
+
 	bool update = core->updateAndRender();
 	
-	if (clOptionsSet) {
+	if (clOptionsJustSet) {
 		core->getInput()->addEventListener(this, InputEvent::EVENT_MOUSEUP);
 		core->getInput()->addEventListener(this, InputEvent::EVENT_MOUSEDOWN);
 		core->getInput()->addEventListener(this, InputEvent::EVENT_KEYDOWN);
+		clOptionsJustSet = false;
 	}
 	
 	return update;
@@ -438,6 +461,7 @@ void NewtonFraktalApp::handleEvent(Event* e){
 #endif
 
 		clOptionsSet = true;
+		clOptionsJustSet = true;
 	}
 	
 	if (!clOptionsSet)
@@ -449,20 +473,16 @@ void NewtonFraktalApp::handleEvent(Event* e){
 		redrawIt();
 	} else if (e->getDispatcher() == openOptions){
 		win->showWindow();
-	} else if (e->getDispatcher() == centerX || e->getDispatcher() == centerY){
+	} else if ((e->getDispatcher() == centerX || e->getDispatcher() == centerY || e->getDispatcher()==zoomField)) {
 		centerDirty = true;
 	} else if (e->getDispatcher() == core->getInput()) {
 		InputEvent* ie = (InputEvent*)e;
 		if (e->getEventCode() == InputEvent::EVENT_MOUSEUP){
-			if (!redraw->mouseOver && /*!zoomField->getMouseOver() &&*/ !win->mouseOver && !openOptions->mouseOver && clOptionsSet){
-				//	centerSel->setPosition(ie->getMousePosition().x, ie->getMousePosition().y);
-				//	centerX->setText(String::NumberToString(mapCL((cl_double)centerSel->getPosition().x, 0, core->getXRes(), -(res[0]) / 2, (res[0]) / 2) / zoom[0] + this->centerCL[0], 6));
-				//	centerY->setText(String::NumberToString(mapCL((cl_double)centerSel->getPosition().y, 0, core->getYRes(), -(res[1]) / 2, (res[1]) / 2) / zoom[1] + this->centerCL[1], 6));
-				//	centerSel->visible = true;
+			if (!redraw->mouseOver && !win->mouseOver && !openOptions->mouseOver && clOptionsSet){
+				centerX->setText(String::NumberToString(mapCL((cl_double)zoomSel->getPosition().x, 0, core->getXRes(), -(zoom[0]) / 2, (zoom[0]) / 2) + this->centerCL[0], 6),false);
+				centerY->setText(String::NumberToString(-(mapCL((cl_double)zoomSel->getPosition().y, 0, core->getYRes(), -(zoom[1]) / 2, (zoom[1]) / 2) + this->centerCL[1]), 6), false);
+				zoomField->setText(String::NumberToString(mapCL((cl_double)zoomSel->getWidth(), 0, core->getXRes(), 0, zoom[0]), 6), false);
 				dragging = false;
-				centerX->setText(String::NumberToString(mapCL((cl_double)zoomSel->getPosition().x, 0, core->getXRes(), -(zoom[0]) / 2, (zoom[0]) / 2) + this->centerCL[0], 6));
-				centerY->setText(String::NumberToString(mapCL((cl_double)zoomSel->getPosition().y, 0, core->getYRes(), -(zoom[1]) / 2, (zoom[1]) / 2) + this->centerCL[1], 6));
-				zoomField->setText(String::NumberToString(mapCL((cl_double)zoomSel->getWidth(), 0, core->getXRes(), 0, zoom[0]), 6));
 			}
 		} else if (e->getEventCode() == InputEvent::EVENT_MOUSEDOWN){
 			if (!redraw->mouseOver && !win->mouseOver && !openOptions->mouseOver && clOptionsSet){
@@ -505,10 +525,9 @@ void NewtonFraktalApp::redrawIt(){
 		if (centerX->getText().isNumber()){
 			center[0] = centerX->getText().toNumber();
 		}
-		if (centerY->getText().isNumber()){
+		if (centerY->getText().isNumber()) {
 			center[1] = centerY->getText().toNumber();
 		}
-		centerDirty = false;
 	//}
 
 	begin = clock();

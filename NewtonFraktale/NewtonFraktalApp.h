@@ -78,6 +78,7 @@ private:
 
 	UITreeContainer* treeCont;
 	bool clOptionsSet;
+	bool clOptionsJustSet;
 
 	clock_t begin, end;
 };
