@@ -30,7 +30,7 @@ int colors[] = {
 };
 
 NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
-	core = new POLYCODE_CORE(view, 1000, 750, false, false, 0, 0, 20);
+	core = new POLYCODE_CORE(view, 1500, 1000, false, false, 0, 0, 20);
 	Services()->getRenderer()->setClearColor(0, 0, 0, 1);
 	CoreServices::getInstance()->getResourceManager()->addArchive("default.pak");
 	CoreServices::getInstance()->getResourceManager()->addDirResource("default", false);
@@ -54,6 +54,28 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 	polynom->addCoefficient(complex<cl_double>(0, 0));
 	polynom->addCoefficient(complex<cl_double>(0, 0));
 	polynom->addCoefficient(complex<cl_double>(1, 0));
+
+	//Performance Test Polynom
+	//polynom->addCoefficient(complex<cl_double>(-1, 0));
+	//polynom->addCoefficient(complex<cl_double>(0, 1));
+	//polynom->addCoefficient(complex<cl_double>(1, 1));
+	//polynom->addCoefficient(complex<cl_double>(1, 0));
+	//polynom->addCoefficient(complex<cl_double>(1, 0));
+	//polynom->addCoefficient(complex<cl_double>(1, 9));
+	//polynom->addCoefficient(complex<cl_double>(3,1));
+	//polynom->addCoefficient(complex<cl_double>(1, 9));
+	//polynom->addCoefficient(complex<cl_double>(2, 5));
+	//polynom->addCoefficient(complex<cl_double>(1, 3));
+	//polynom->addCoefficient(complex<cl_double>(2, 1));
+	//polynom->addCoefficient(complex<cl_double>(3, 2));
+	//polynom->addCoefficient(complex<cl_double>(9, 2));
+	//polynom->addCoefficient(complex<cl_double>(12, 3));
+	//polynom->addCoefficient(complex<cl_double>(3, 9));
+	//polynom->addCoefficient(complex<cl_double>(0, 1));
+	//polynom->addCoefficient(complex<cl_double>(7, 1));
+	//polynom->addCoefficient(complex<cl_double>(2, 4));
+	//polynom->addCoefficient(complex<cl_double>(4, 3));
+	//polynom->addCoefficient(complex<cl_double>(1, 0));
 
 	derivation = new Polynom((*polynom));
 	derivation->differentiate();
@@ -191,6 +213,7 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 	zoomField->addEventListener(this, UIEvent::CHANGE_EVENT);
 
 	dragging = false;
+	useCPU = true;
 }
 
 NewtonFraktalApp::~NewtonFraktalApp() { }
@@ -207,10 +230,10 @@ bool NewtonFraktalApp::Update() {
 		if (size * (size * ratio) * 3 < MAXINT) {
 			Image *zoomSelector = new Image(size, size * ratio);
 			zoomSelector->fill(Color(0.0, 0.0, 0.0, 0.0));
-			zoomSelector->fillRect(0, 0, zoomSelector->getWidth(), 3, Color(1.0, 0.0, 0.0, 1.0));
-			zoomSelector->fillRect(0, 0, 3, zoomSelector->getHeight(), Color(1.0, 0.0, 0.0, 1.0));
-			zoomSelector->fillRect(zoomSelector->getWidth() - 3, 0, 3, zoomSelector->getHeight(), Color(1.0, 0.0, 0.0, 1.0));
-			zoomSelector->fillRect(0, zoomSelector->getHeight() - 3, zoomSelector->getWidth(), 3, Color(1.0, 0.0, 0.0, 1.0));
+			zoomSelector->fillRect(0, 0, zoomSelector->getWidth(), 3, Color(1.0, 0.0, 0.0, 0.7));
+			zoomSelector->fillRect(0, 0, 3, zoomSelector->getHeight(), Color(1.0, 0.0, 0.0, 0.7));
+			zoomSelector->fillRect(zoomSelector->getWidth() - 3, 0, 3, zoomSelector->getHeight(), Color(1.0, 0.0, 0.0, 0.7));
+			zoomSelector->fillRect(0, zoomSelector->getHeight() - 3, zoomSelector->getWidth(), 3, Color(1.0, 0.0, 0.0, 0.7));
 
 			selScene->removeEntity(zoomSel);
 			delete zoomSel;
@@ -328,7 +351,7 @@ void NewtonFraktalApp::drawFractal(){
 	FILE* logFile;
 	fopen_s(&logFile, "polynoms.log", "a");
 	String timeS = String::IntToString(time(NULL)), polynomS = polynom->printPolynom();
-	fprintf(logFile, "Time: %s, Polynom: %s, Center: %f, %f, Zoom: %d, The computation took: %f seconds\n", timeS.c_str(), polynomS.c_str(), centerCL[0], centerCL[1], zoom[0], double(end - begin) / CLOCKS_PER_SEC);
+	fprintf(logFile, "Time: %s, Polynom: %s, Center: %f, %f, Area size: x: %f y: %f, The computation took: %s seconds\n", timeS.c_str(), polynomS.c_str(), centerCL[0], centerCL[1], zoom[0], zoom[1], String::NumberToString(double(end - begin) / CLOCKS_PER_SEC).c_str());
 	fraktal->saveImage(timeS + " " + String::IntToString(zoom[0])  +".png");
 	fclose(logFile);
 
@@ -340,20 +363,15 @@ void NewtonFraktalApp::drawFractal(){
 
 void NewtonFraktalApp::findZeros(){
 	std::vector<std::complex<cl_double>> zerosT;
-	cl_double x = -400, y = -400;
-	while (y <= 400){
-		while (x <= 400){
+	for (int y = -200; y < 200; y++) {
+		for (int x = -200; x < 200; x++) {
 			std::complex<cl_double> z(x, y);
 			std::complex<cl_double> zo(0, 0);
-			for (int i = 0; i < 3000; i++){
+			for (int i = 0; i < 1000; i++) {
 				zo = z;
 				z = z - polynom->getValue(z) / derivation->getValue(z);
-				if (fabs(z.real() - zo.real()) <= 0.00000001 && fabs(z.imag() - zo.imag()) <= 0.00000001){
+				if (compComplex(z, zo, RESOLUTION)) {
 					zerosT.push_back(z);
-					break;
-				}
-				if (z.real() > 10000){
-					z = complex<double>(10000, 10000);
 					break;
 				}
 			}
@@ -370,7 +388,8 @@ void NewtonFraktalApp::findZeros(){
 		for (int j = 0; j <= s; j++){
 			if (j == zeros.size()){
 				zeros.push_back(zerosT[i]);
-			} else if (compComplex(zeros[j], zerosT[i], 0.00000001)){
+				Logger::log("Zero %d: (%f|%f)\n", j, this->zeros[j].real(), this->zeros[j].imag());
+			} else if (compComplex(zeros[j], zerosT[i], RESOLUTION)) {
 				break;
 			}
 		}
@@ -387,10 +406,11 @@ void NewtonFraktalApp::runNewton(std::vector<double> &result, std::vector<double
 	for (int y = 0; y < res[1]; y++){
 		for (int x = 0; x < res[0]; x++){
 			const double a = (double)zoom[0] * ((double)x - ((double)xRes / 2.0)) / xRes + centerCL[0];
-			const double b = (double)zoom[1] * ((double)y - ((double)yRes / 2.0)) / yRes + centerCL[1];
+			const double b = (double)zoom[1] * (((double)yRes / 2.0) - (double)y) / yRes + centerCL[1];
 
 			z = complex<double>(a, b);
 			typeRes.push_back(19);
+			result.push_back(0);
 
 			bool found = false;
 			int i = 0;
@@ -407,7 +427,7 @@ void NewtonFraktalApp::runNewton(std::vector<double> &result, std::vector<double
 				for (int j = 0; j < polynom->getNumCoefficients() - 1; j++) {
 					if (compComplex(z, zeros[j], RESOLUTION)) {
 						typeRes[typeRes.size()-1] = j;
-						result.push_back((log(RESOLUTION) - log(abs(zo-zeros[j]))) / (log(abs(z-zeros[j])) - log(abs(zo-zeros[j]))));
+						result[x + y * res[0]] = (log(RESOLUTION) - log(abs(zo - zeros[j]))) / (log(abs(z - zeros[j])) - log(abs(zo - zeros[j])));
 						found = true;
 						break;
 					}
@@ -436,6 +456,7 @@ void NewtonFraktalApp::handleEvent(Event* e){
 		begin = clock();
 
 		if ((int)treeCont->getRootNode()->getSelectedNode()->getUserData() >= 0){
+			useCPU = false;
 			cl_int paramc[] = { polynom->getNumCoefficients(), derivation->getNumCoefficients() };
 			genCL->initCLAndRunNewton(zoom, res, polynom->getCLCoefficients(), derivation->getCLCoefficients(), paramc, (int)treeCont->getRootNode()->getSelectedNode()->getParent()->getUserData(), (int)treeCont->getRootNode()->getSelectedNode()->getUserData());
 		}
@@ -480,7 +501,7 @@ void NewtonFraktalApp::handleEvent(Event* e){
 		if (e->getEventCode() == InputEvent::EVENT_MOUSEUP){
 			if (!redraw->mouseOver && !win->mouseOver && !openOptions->mouseOver && clOptionsSet){
 				centerX->setText(String::NumberToString(mapCL((cl_double)zoomSel->getPosition().x, 0, core->getXRes(), -(zoom[0]) / 2, (zoom[0]) / 2) + this->centerCL[0], 6),false);
-				centerY->setText(String::NumberToString(-(mapCL((cl_double)zoomSel->getPosition().y, 0, core->getYRes(), -(zoom[1]) / 2, (zoom[1]) / 2) + this->centerCL[1]), 6), false);
+				centerY->setText(String::NumberToString(-mapCL((cl_double)zoomSel->getPosition().y, 0, core->getYRes(), -(zoom[1]) / 2, (zoom[1]) / 2) + this->centerCL[1], 6), false);
 				zoomField->setText(String::NumberToString(mapCL((cl_double)zoomSel->getWidth(), 0, core->getXRes(), 0, zoom[0]), 6), false);
 				dragging = false;
 			}
@@ -531,10 +552,10 @@ void NewtonFraktalApp::redrawIt(){
 	//}
 
 	begin = clock();
-
-	cl_int paramc[] = { polynom->getNumCoefficients(), derivation->getNumCoefficients() };
-
-	genCL->runNewton(zoom, res, center, polynom->getCLCoefficients(), derivation->getCLCoefficients(), paramc);
+	if (!useCPU) {
+		cl_int paramc[] = { polynom->getNumCoefficients(), derivation->getNumCoefficients() };
+		genCL->runNewton(zoom, res, center, polynom->getCLCoefficients(), derivation->getCLCoefficients(), paramc);
+	}
 
 	this->centerCL = center;
 	drawFractal();

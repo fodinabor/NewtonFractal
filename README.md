@@ -6,4 +6,4 @@ To run you need an OpenCL Device and a Driver. If you don't already have one I'd
 Currently there are only Windows Binaries and build files.
 
 You might get something like these when playing around with this program:
-![](https://cloud.egp-jugend.de/index.php/s/pzK7h9sKusLBUG6/download)
+![](https://cloud.egp-jugend.de/index.php/s/TRFDxXUD4IKkz5o/download)

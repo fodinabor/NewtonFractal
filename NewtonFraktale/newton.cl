@@ -127,7 +127,7 @@ __kernel void newtonFraktal(__global const int* res, __global const double* zoom
 	//const double a = (double)((x - (double)(xRes / 2)) / zoom[0]) + center[0];
 	const double a = (double)(zoom[0] * ((double)x - ((double)xRes / 2.0))) / xRes + center[0];
 	//const double b = (double)((y - (double)(yRes / 2)) / zoom[1]) + center[1];
-	const double b = (double)(zoom[1] * ((double)y - ((double)yRes / 2.0))) / yRes + center[1];
+	const double b = (double)(zoom[1] * (((double)yRes / 2.0) - (double)y)) / yRes + center[1];
 
 	struct complex z = createComplexFromKarthes(a, b);
 	struct complex f, d, zo;

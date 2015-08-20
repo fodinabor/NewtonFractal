@@ -4,6 +4,8 @@
 #include "Polynom.h"
 #include <iostream>
 
+#define RESOLUTION 0.0000000001
+
 using namespace Polycode;
 
 struct cl_complex {
@@ -161,7 +163,7 @@ void NewtonFraktalCLGeneration::calcZeros(){
 			for (int j = 0; j <= s; j++){
 				if (j == zerosCompl.size()){
 					zerosCompl.push_back(t);
-				} else if (compComplex(zerosCompl[j], t, 0.00001)){
+				} else if (compComplex(zerosCompl[j], t, RESOLUTION)) {
 					break;
 				}
 			}
