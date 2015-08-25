@@ -131,7 +131,7 @@ __kernel void newtonFraktal(__global const int* res, __global const double* zoom
 
 	struct complex z = createComplexFromKarthes(a, b);
 	struct complex f, d, zo;
-	resType[x + xRes * y] = 14;
+	resType[x + xRes * y] = -1;
 
 	bool found = false;
 	int i = 0;
@@ -156,12 +156,12 @@ __kernel void newtonFraktal(__global const int* res, __global const double* zoom
 		}
 
 		if (compComplex(z, zo, RESOLUTION/100) && !found){
-			resType[x + xRes * y] = 20;
+			resType[x + xRes * y] = -1;
 			break;
 		}
 	}
 	if (fabs(z.r) >= 10000){
-		resType[x + xRes * y] = 20;
+		resType[x + xRes * y] = -1;
 	}
 	iterations[x + xRes * y] = i;
 }

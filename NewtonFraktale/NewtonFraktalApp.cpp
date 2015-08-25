@@ -26,7 +26,11 @@ int colors[] = {
 	0x9900ff,
 	0x0099ff,
 	0xff0099,
-	0xff9900
+	0xff9900,
+	0xff5500,
+	0x55ff00,
+	0x00ff55,
+	0x0055ff
 };
 
 NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
@@ -76,6 +80,33 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 	//polynom->addCoefficient(complex<cl_double>(2, 4));
 	//polynom->addCoefficient(complex<cl_double>(4, 3));
 	//polynom->addCoefficient(complex<cl_double>(1, 0));
+
+	//polynom->addCoefficient(complex<cl_double>(rand() % 15, rand() % 15));
+	//polynom->addCoefficient(complex<cl_double>(rand() % 15, rand() % 15));
+	//polynom->addCoefficient(complex<cl_double>(rand() % 15, rand() % 15));
+	//polynom->addCoefficient(complex<cl_double>(rand() % 15, rand() % 15));
+	//polynom->addCoefficient(complex<cl_double>(rand() % 15, rand() % 15));
+	//polynom->addCoefficient(complex<cl_double>(rand() % 15, rand() % 15));
+	//polynom->addCoefficient(complex<cl_double>(rand() % 15, rand() % 15));
+	//polynom->addCoefficient(complex<cl_double>(rand() % 15, rand() % 15));
+	//polynom->addCoefficient(complex<cl_double>(rand() % 15, rand() % 15));
+	//polynom->addCoefficient(complex<cl_double>(rand() % 15, rand() % 15));
+	//polynom->addCoefficient(complex<cl_double>(rand() % 15, rand() % 15));
+	//polynom->addCoefficient(complex<cl_double>(rand() % 15, rand() % 15));
+	//polynom->addCoefficient(complex<cl_double>(rand() % 15, rand() % 15));
+	//polynom->addCoefficient(complex<cl_double>(rand() % 15, rand() % 15));
+	//polynom->addCoefficient(complex<cl_double>(rand() % 15, rand() % 15));
+	//polynom->addCoefficient(complex<cl_double>(rand() % 15, rand() % 15));
+	//polynom->addCoefficient(complex<cl_double>(rand() % 15, rand() % 15));
+	//polynom->addCoefficient(complex<cl_double>(rand() % 15, rand() % 15));
+	//polynom->addCoefficient(complex<cl_double>(rand() % 15, rand() % 15));
+	//polynom->addCoefficient(complex<cl_double>(rand() % 15, rand() % 15));
+	//polynom->addCoefficient(complex<cl_double>(rand() % 15, rand() % 15));
+	//polynom->addCoefficient(complex<cl_double>(rand() % 15, rand() % 15));
+	//polynom->addCoefficient(complex<cl_double>(rand() % 15, rand() % 15));
+	//polynom->addCoefficient(complex<cl_double>(rand() % 15, rand() % 15));
+
+	//polynom = Polynom::readFromString("( 1 + 6 i)*x^ 23 + ( 14 + 3 i)*x^ 22 + ( 3 + 2 i)*x^ 21 + ( 6 + 8 i)*x^ 20 + ( 9 + 10 i)*x^ 19 + ( 4 + 2 i)*x^ 18 + ( 7 + 9 i)*x^ 17 + ( 3 + 11 i)*x^ 16 + ( 6 + 2 i)*x^ 15 + ( 5 + 8 i)*x^ 14 + ( 11 + 6 i)*x^ 13 + ( 7 + 7 i)*x^ 12 + ( 3 + 2 i)*x^ 11 + ( 9 + 6 i)*x^ 10 + ( 6 + 12 i)*x^ 9 + ( 2 + 10 i)*x^ 8 + ( 11 + 1 i)*x^ 7 + ( 12 + 1 i)*x^ 6 + ( 5 + 5 i)*x^ 5 + ( 14 + 7 i)*x^ 4 + ( 3 + 3 i)*x^ 3 + ( 4 + 14 i)*x^ 2 + ( 10 + 4 i)*x + ( 2 + 11 i)");
 
 	derivation = new Polynom((*polynom));
 	derivation->differentiate();
@@ -293,31 +324,23 @@ void NewtonFraktalApp::drawFractal(){
 
 	clock_t end = clock();
 
-	double maxIters = 0, minIters = 0, max = 0, min = 0;
+	double maxIters = 0;
 	for (int y = 0; y < fraktal->getHeight(); y++){
 		for (int x = 0; x < fraktal->getWidth(); x++){
 			if (cl){
-				if (genCL->typeRes[x + y * xRes] < 20){
+				if (genCL->typeRes[x + y * xRes] >= 0){
 					maxIters = MAX(maxIters, genCL->iterations[x + y * xRes]);
-					minIters = MIN(minIters, genCL->iterations[x + y * xRes]);
-					max = MAX(max, genCL->result[x + y * xRes]);
-					min = MIN(min, genCL->result[x + y * xRes]);
 				}
 			} else {
-				if (typeRes[x + y * xRes] < 20){
+				if (typeRes[x + y * xRes] >= 0){
 					maxIters = MAX(maxIters, iterations[x + y * xRes]);
-					minIters = MIN(minIters, iterations[x + y * xRes]);
-					max = MAX(max, result[x + y * xRes]);
-					min = MIN(min, result[x + y * xRes]);
 				}
-
 			}
 		}
 	}
 
 	maxIters = maxIters / ((double)polynom->getNumCoefficients() / ((double)polynom->getNumCoefficients()/3.0));
-	Logger::log("x: %f, y: %f\n", (double)(zoom[0] * ((double)0 - ((double)res[0] / 2.0)) + centerCL[0]) / (res[0]), (double)(zoom[1] * ((double)0 - ((double)res[1] / 2.0)) + centerCL[1]) / (res[1]));
-	Logger::log("x: %f, y: %f\n", (double)(zoom[0] * ((double)res[0] - ((double)res[0] / 2.0)) + centerCL[0]) / (res[0]), (double)(zoom[1] * ((double)res[1] - ((double)res[1] / 2.0)) + centerCL[1]) / (res[1]));
+	
 	for (int y = 0; y < yRes; y++){
 		for (int x = 0; x < xRes; x++){
 			int type;
@@ -332,7 +355,7 @@ void NewtonFraktalApp::drawFractal(){
 				it = iterations[x + y * xRes];
 			}
 			
-			if (type < 20){
+			if (type >= 0){
 				Color col;
 				col.setColorHexRGB(colors[type]);
 				conDiv = conDiv + (double)it;
@@ -351,14 +374,26 @@ void NewtonFraktalApp::drawFractal(){
 	FILE* logFile;
 	fopen_s(&logFile, "polynoms.log", "a");
 	String timeS = String::IntToString(time(NULL)), polynomS = polynom->printPolynom();
-	fprintf(logFile, "Time: %s, Polynom: %s, Center: %f, %f, Area size: x: %f y: %f, The computation took: %s seconds\n", timeS.c_str(), polynomS.c_str(), centerCL[0], centerCL[1], zoom[0], zoom[1], String::NumberToString(double(end - begin) / CLOCKS_PER_SEC).c_str());
-	fraktal->saveImage(timeS + " " + String::IntToString(zoom[0])  +".png");
+	fprintf(logFile, "Time: %s, Polynom: %s, Center: %f, %f, Area size: x: %f y: %f, MaxIters: %f, The computation took: %s seconds\n", timeS.c_str(), polynomS.c_str(), centerCL[0], centerCL[1], zoom[0], zoom[1], maxIters, String::NumberToString(double(end - begin) / CLOCKS_PER_SEC).c_str());
+	fraktal->saveImage(timeS + ".png");
 	fclose(logFile);
 
+	if(sceneFraktal)
+		Services()->getMaterialManager()->deleteTexture(sceneFraktal->getTexture());
 	scene->removeEntity(sceneFraktal);
 	delete sceneFraktal;
 	sceneFraktal = new SceneImage(fraktal);
 	scene->addChild(sceneFraktal);
+
+	if (cl) {
+		//free(genCL->result);
+		//free(genCL->typeRes);
+		//free(genCL->iterations);
+	} else {
+		result.clear();
+		typeRes.clear();
+		iterations.clear();
+	}
 }
 
 void NewtonFraktalApp::findZeros(){
@@ -409,7 +444,7 @@ void NewtonFraktalApp::runNewton(std::vector<double> &result, std::vector<double
 			const double b = (double)zoom[1] * (((double)yRes / 2.0) - (double)y) / yRes + centerCL[1];
 
 			z = complex<double>(a, b);
-			typeRes.push_back(19);
+			typeRes.push_back(-1);
 			result.push_back(0);
 
 			bool found = false;
@@ -434,12 +469,12 @@ void NewtonFraktalApp::runNewton(std::vector<double> &result, std::vector<double
 				}
 
 				if (compComplex(z, zo, RESOLUTION / 10) && !found) {
-					typeRes[typeRes.size()-1] = 20;
+					typeRes[typeRes.size()-1] = -1;
 					break;
 				}
 			}
 			if (abs(z) >= 10000) {
-				typeRes[typeRes.size()-1] = 20;
+				typeRes[typeRes.size()-1] = -1;
 			}
 			iterations.push_back(i);
 		}

@@ -22,7 +22,6 @@ public:
 
 	String printPolynom();
 
-	//ToDo: implement
 	static Polynom* readFromString(String polynom);
 
 	struct cl_complex* getCLCoefficients();
