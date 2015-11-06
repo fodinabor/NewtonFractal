@@ -366,7 +366,10 @@ void NewtonFraktalApp::drawFractal(){
 				col.setColorHSV(col.getHue(), col.getSaturation(), (1.0 - mapCL(conDiv, 0, maxIters, 0.0, 1.0)));
 				fraktal->setPixel(x, y, col);
 			} else {
-				fraktal->setPixel(x, y, 0, 0, 0, 0);
+				if(type == -1)
+					fraktal->setPixel(x, y, 1, 1, 1, 1);
+				else 
+					fraktal->setPixel(x, y, 1, 1, 0, 1);
 			}
 		}
 	}

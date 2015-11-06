@@ -190,9 +190,16 @@ copy "newton.cl" "$(TargetDir)"</Command>
     <ClInclude Include="NewtonFraktalApp.h" />
     <ClInclude Include="NewtonFraktalCLGeneration.h" />
     <ClInclude Include="Polynom.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="newton.cl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="NewtonFraktale.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="icon1.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
