@@ -39,7 +39,8 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 	CoreServices::getInstance()->getResourceManager()->addArchive("default.pak");
 	CoreServices::getInstance()->getResourceManager()->addDirResource("default", false);
 	CoreServices::getInstance()->getResourceManager()->addArchive("UIThemes.pak");
-	CoreServices::getInstance()->getConfig()->loadConfig("Polycode", "UIThemes/dark/theme.xml");
+	/*CoreServices::getInstance()->getResourceManager()->addDirResource("", true);*/
+	CoreServices::getInstance()->getConfig()->loadConfig("Polycode", "theme.xml");
 
 	SceneLabel::defaultAnchor = Vector3(-1.0, -1.0, 0.0);
 	SceneLabel::defaultPositionAtBaseline = true;
@@ -141,20 +142,20 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 	ui->getDefaultCamera()->setOrthoSize(core->getXRes(), core->getYRes());
 	ui->rootEntity.processInputEvents = true;
 	
-	treeCont = new UITreeContainer("UIThemes/OpenCLIcon.png", "OpenCL Devices", 500, core->getYRes());
+	treeCont = new UITreeContainer("OpenCLIcon.png", "OpenCL Devices", 500, core->getYRes());
 	ui->addChild(treeCont);
 	treeCont->getRootNode()->addEventListener(this, UITreeEvent::EXECUTED_EVENT);
 	
 	for (int i = 0; i < genCL->platformStrs.size(); i++){
 		UITree* plat = treeCont->getRootNode()->addTreeChild(Services()->getConfig()->getStringValue("Polycode","uiFileBrowserFolderIcon"), genCL->platformStrs[i], (void*)i);
 		for (int j = 0; j < genCL->deviceStrs[i].size(); j++){
-			plat->addTreeChild("UIThemes/DeviceIcon.png", genCL->deviceStrs[i][j], (void*)j);
+			plat->addTreeChild("DeviceIcon.png", genCL->deviceStrs[i][j], (void*)j);
 		}
 		plat->toggleCollapsed();
 	}
 	treeCont->getRootNode()->toggleCollapsed();
 
-	treeCont->getRootNode()->addTreeChild("UIThemes/CpuIcon.png", "No OpenCL (SLOW!! Consider installing an OpenCL Driver!)", (void*)-1);
+	treeCont->getRootNode()->addTreeChild("CpuIcon.png", "No OpenCL (SLOW!! Consider installing an OpenCL Driver!)", (void*)-1);
 	
 	Image *centerSelector = new Image(20, 20);
 	centerSelector->fill(Color(0.0, 0.0, 0.0, 0.0));
@@ -192,7 +193,7 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 
 	polynomInput = new UITextInput(false, 390, 15);
 	polynomInput->setText(polyS);
-	win->addChild(polynomInput);
+	win->addFocusChild(polynomInput);
 	polynomInput->setPosition(12, 40);
 
 	center = new UILabel("Center:", 12);
@@ -200,21 +201,34 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 	center->setPosition(12, 70);
 
 	centerX = new UITextInput(false, 390, 15);
-	win->addChild(centerX);
+	win->addFocusChild(centerX);
 	centerX->setText("0");
 	centerX->setNumberOnly(true);
 	centerX->setPosition(12, 95);
 	centerX->addEventListener(this, UIEvent::CHANGE_EVENT);
 
 	centerY = new UITextInput(false, 390, 15);
-	win->addChild(centerY);
+	win->addFocusChild(centerY);
 	centerY->setText("0");
 	centerY->setNumberOnly(true);
 	centerY->setPosition(12, 120);
 	centerY->addEventListener(this, UIEvent::CHANGE_EVENT);
 
+	zoomL = new UILabel(L"Ausschnittsgröße:", 12);
+	zoomL->setPosition(12, 160);
+	win->addChild(zoomL);
+
+	zoomField = new UITextInput(false, 390, 15);
+	zoomField->setNumberOnly(true);
+	zoomField->setPosition(12, 180);
+	win->addFocusChild(zoomField);
+	zoomField->enabled = false;
+	zoomField->visible = false;
+	zoomField->setText(String::NumberToString(zoom[0]));
+	zoomField->addEventListener(this, UIEvent::CHANGE_EVENT);
+
 	redrawWinButton = new UIButton("Draw", 40);
-	win->addChild(redrawWinButton);
+	win->addFocusChild(redrawWinButton);
 	redrawWinButton->setPosition(12, win->getHeight() - 40);
 	redrawWinButton->addEventListener(this, UIEvent::CLICK_EVENT);
 
@@ -229,19 +243,6 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 	ui->addChild(openOptions);
 	openOptions->enabled = false;
 	openOptions->visible = false;
-
-	zoomL = new UILabel(L"Ausschnittsgröße:", 12);
-	zoomL->setPosition(12, 160);
-	win->addChild(zoomL);
-
-	zoomField = new UITextInput(false, 390, 15);
-	zoomField->setNumberOnly(true);
-	zoomField->setPosition(12, 180);
-	win->addChild(zoomField);
-	zoomField->enabled = false;
-	zoomField->visible = false;
-	zoomField->setText(String::NumberToString(zoom[0]));
-	zoomField->addEventListener(this, UIEvent::CHANGE_EVENT);
 
 	dragging = false;
 	useCPU = true;
@@ -266,6 +267,7 @@ bool NewtonFraktalApp::Update() {
 			zoomSelector->fillRect(zoomSelector->getWidth() - 3, 0, 3, zoomSelector->getHeight(), Color(1.0, 0.0, 0.0, 0.7));
 			zoomSelector->fillRect(0, zoomSelector->getHeight() - 3, zoomSelector->getWidth(), 3, Color(1.0, 0.0, 0.0, 0.7));
 
+			Services()->getRenderer()->destroyTexture(zoomSel->getTexture());
 			selScene->removeEntity(zoomSel);
 			delete zoomSel;
 
@@ -273,6 +275,7 @@ bool NewtonFraktalApp::Update() {
 			zoomSel->blendingMode = Renderer::BLEND_MODE_NORMAL;
 			zoomSel->visible = true;
 			selScene->addEntity(zoomSel);
+			delete zoomSelector;
 
 			if (dragging) {
 				if (Services()->getInput()->mousePosition.x - startPoint.x > 0) {
@@ -367,7 +370,7 @@ void NewtonFraktalApp::drawFractal(){
 				fraktal->setPixel(x, y, col);
 			} else {
 				if(type == -1)
-					fraktal->setPixel(x, y, 1, 1, 1, 1);
+					fraktal->setPixel(x, y, 0, 0, 0, 1);
 				else 
 					fraktal->setPixel(x, y, 1, 1, 0, 1);
 			}
@@ -377,14 +380,15 @@ void NewtonFraktalApp::drawFractal(){
 	FILE* logFile;
 	fopen_s(&logFile, "polynoms.log", "a");
 	String timeS = String::IntToString(time(NULL)), polynomS = polynom->printPolynom();
-	fprintf(logFile, "Time: %s, Polynom: %s, Center: %f, %f, Area size: x: %f y: %f, MaxIters: %f, The computation took: %s seconds\n", timeS.c_str(), polynomS.c_str(), centerCL[0], centerCL[1], zoom[0], zoom[1], maxIters, String::NumberToString(double(end - begin) / CLOCKS_PER_SEC).c_str());
+	fprintf(logFile, "Time: %s, Polynom: %s, Center: %.15Lf, %.15Lf, Area size: x: %.15Lf y: %.15Lf, MaxIters: %f, The computation took: %s seconds\n", timeS.c_str(), polynomS.c_str(), centerCL[0], centerCL[1], zoom[0], zoom[1], maxIters, String::NumberToString(double(end - begin) / CLOCKS_PER_SEC).c_str());
 	fraktal->saveImage(timeS + ".png");
 	fclose(logFile);
 
-	if(sceneFraktal)
-		Services()->getMaterialManager()->deleteTexture(sceneFraktal->getTexture());
-	scene->removeEntity(sceneFraktal);
-	delete sceneFraktal;
+	if (sceneFraktal) {
+		Services()->getRenderer()->destroyTexture(sceneFraktal->getTexture());
+		scene->removeEntity(sceneFraktal);
+		delete sceneFraktal;
+	}
 	sceneFraktal = new SceneImage(fraktal);
 	scene->addChild(sceneFraktal);
 
@@ -537,14 +541,14 @@ void NewtonFraktalApp::handleEvent(Event* e){
 	} else if (e->getDispatcher() == core->getInput()) {
 		InputEvent* ie = (InputEvent*)e;
 		if (e->getEventCode() == InputEvent::EVENT_MOUSEUP){
-			if (!redraw->mouseOver && !win->mouseOver && !openOptions->mouseOver && clOptionsSet){
-				centerX->setText(String::NumberToString(mapCL((cl_double)zoomSel->getPosition().x, 0, core->getXRes(), -(zoom[0]) / 2, (zoom[0]) / 2) + this->centerCL[0], 6),false);
-				centerY->setText(String::NumberToString(-mapCL((cl_double)zoomSel->getPosition().y, 0, core->getYRes(), -(zoom[1]) / 2, (zoom[1]) / 2) + this->centerCL[1], 6), false);
-				zoomField->setText(String::NumberToString(mapCL((cl_double)zoomSel->getWidth(), 0, core->getXRes(), 0, zoom[0]), 6), false);
+			if (dragging){
+				centerX->setText(String::NumberToString(mapCL((cl_double)zoomSel->getPosition().x, 0, core->getXRes(), -(zoom[0]) / 2, (zoom[0]) / 2) + this->centerCL[0], 15),false);
+				centerY->setText(String::NumberToString(-mapCL((cl_double)zoomSel->getPosition().y, 0, core->getYRes(), -(zoom[1]) / 2, (zoom[1]) / 2) + this->centerCL[1], 15), false);
+				zoomField->setText(String::NumberToString(mapCL((cl_double)zoomSel->getWidth(), 0, core->getXRes(), 0, zoom[0]), 15), false);
 				dragging = false;
 			}
 		} else if (e->getEventCode() == InputEvent::EVENT_MOUSEDOWN){
-			if (!redraw->mouseOver && !win->mouseOver && !openOptions->mouseOver && clOptionsSet){
+			if (!redraw->mouseOver && (!win->mouseOver || !win->visible) && !openOptions->mouseOver && clOptionsSet){
 				dragging = true;
 				startPoint = ie->getMousePosition();
 			}
@@ -557,7 +561,7 @@ void NewtonFraktalApp::handleEvent(Event* e){
 				break;
 			}
 		}
-	} 
+	}
 }
 
 void NewtonFraktalApp::redrawIt(){
