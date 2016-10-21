@@ -2,12 +2,6 @@
 #include "PolyLogger.h"
 #include <cstring>
 
-struct cl_complex {
-	cl_double im;
-	cl_double re;
-	cl_double r;
-	cl_double phi;
-};
 extern struct cl_complex createComplexFromKarthes(cl_double real, cl_double imag);
 
 Polynom::Polynom(){}
@@ -102,7 +96,7 @@ Polynom* Polynom::readFromString(String polynom){
 }
 
 struct cl_complex* Polynom::getCLCoefficients(){
-	cl_complex* coefficientsCL = (cl_complex*)malloc(coefficients.size()*sizeof(cl_complex) * 2);
+	struct cl_complex* coefficientsCL = (struct cl_complex*)malloc(coefficients.size()*sizeof(struct cl_complex) * 2);
 	for (int i = 0; i < coefficients.size(); i++){
 		coefficientsCL[i] = createComplexFromKarthes(coefficients[i].real(),coefficients[i].imag());
 	}

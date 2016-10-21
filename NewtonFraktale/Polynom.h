@@ -7,6 +7,16 @@
 using namespace Polycode;
 using namespace std;
 
+struct cl_complex {
+	cl_double im;
+	cl_double re;
+	cl_double r;
+	cl_double phi;
+
+	cl_char isPolar;
+	cl_char isKarthes;
+};
+
 class Polynom {
 public:
 	Polynom();

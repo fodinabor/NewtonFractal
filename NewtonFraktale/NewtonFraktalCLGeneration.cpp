@@ -8,20 +8,15 @@
 
 using namespace Polycode;
 
-struct cl_complex {
-	cl_double im;
-	cl_double re;
-	cl_double r;
-	cl_double phi;
-};
-
 struct cl_complex createComplexFromKarthes(cl_double real, cl_double imag){
 	struct cl_complex t;
 	t.re = real;
 	t.im = imag;
+	t.isKarthes = true;
 
 	t.phi = atan2(imag, real);
 	t.r = sqrt(t.re*t.re + t.im*t.im);
+	t.isPolar = true;
 
 	return t;
 }
@@ -40,7 +35,11 @@ NewtonFraktalCLGeneration::NewtonFraktalCLGeneration(){
 		platforms[i].getInfo(CL_PLATFORM_NAME, &vendor);
 		platformStrs.push_back(vendor);
 		cl::vector<cl::Device> pDevices;
-		platforms[i].getDevices(CL_DEVICE_TYPE_ALL, &pDevices);
+		//try {
+			platforms[i].getDevices(CL_DEVICE_TYPE_ALL, &pDevices);
+		//} catch (cl::Error& err){
+			//Logger::log("No Device of the specified type found for Platform %s.\n", vendor.c_str());
+		//}
 		std::vector<String> strs;
 		for (int j = 0; j < pDevices.size(); j++){
 			pDevices[j].getInfo<std::string>(CL_DEVICE_NAME, &deviceName);
@@ -122,19 +121,19 @@ void NewtonFraktalCLGeneration::calcZeros(){
 	try{
 
 		kernel = cl::Kernel(program, "findZeros", &err);
-
+		//Logger::log("cl_complex size: %d \n", sizeof(struct cl_complex));
 		cl_int resZ[] = { 400, 400 };
 		cl::Buffer resBuf(context, CL_MEM_READ_ONLY, 2 * sizeof(cl_int));
-		cl::Buffer paramsBuf(context, CL_MEM_READ_ONLY, paramc[0] * sizeof(cl_complex));
-		cl::Buffer paramsDBuf(context, CL_MEM_READ_ONLY, paramc[1] * sizeof(cl_complex));
+		cl::Buffer paramsBuf(context, CL_MEM_READ_ONLY, paramc[0] * sizeof(struct cl_complex));
+		cl::Buffer paramsDBuf(context, CL_MEM_READ_ONLY, paramc[1] * sizeof(struct cl_complex));
 		cl::Buffer paramcBuf(context, CL_MEM_READ_ONLY, 2 * sizeof(cl_int));
-		cl::Buffer outBuf(context, CL_MEM_WRITE_ONLY, (resZ[0] * resZ[1]) * sizeof(cl_complex));
+		cl::Buffer outBuf(context, CL_MEM_WRITE_ONLY, (resZ[0] * resZ[1]) * sizeof(struct cl_complex));
 
-		zeros = (cl_complex*)calloc(resZ[0] * resZ[1], sizeof(cl_complex));
+		zeros = (struct cl_complex*)calloc(resZ[0] * resZ[1], sizeof(struct cl_complex));
 
 		queue.enqueueWriteBuffer(resBuf, CL_TRUE, 0, 2 * sizeof(cl_int), resZ);
-		queue.enqueueWriteBuffer(paramsBuf, CL_TRUE, 0, this->paramc[0] * sizeof(cl_complex), this->params);
-		queue.enqueueWriteBuffer(paramsDBuf, CL_TRUE, 0, this->paramc[1] * sizeof(cl_complex), this->paramsD);
+		queue.enqueueWriteBuffer(paramsBuf, CL_TRUE, 0, this->paramc[0] * sizeof(struct cl_complex), this->params);
+		queue.enqueueWriteBuffer(paramsDBuf, CL_TRUE, 0, this->paramc[1] * sizeof(struct cl_complex), this->paramsD);
 		queue.enqueueWriteBuffer(paramcBuf, CL_TRUE, 0, 2 * sizeof(cl_int), this->paramc);
 
 		kernel.setArg(0, resBuf);
@@ -172,7 +171,7 @@ void NewtonFraktalCLGeneration::calcZeros(){
 		}
 
 		free(zeros);
-		this->zeros = (cl_complex*)calloc(zerosCompl.size(), sizeof(cl_complex));
+		this->zeros = (struct cl_complex*)calloc(zerosCompl.size(), sizeof(struct cl_complex));
 		for (int i = 0; i < zerosCompl.size(); i++){
 			this->zeros[i] = createComplexFromKarthes(zerosCompl[i].real(),zerosCompl[i].imag());
 			Logger::log("Zero %d: (%f|%f)\n", i, this->zeros[i].re, this->zeros[i].im);
@@ -207,9 +206,9 @@ void NewtonFraktalCLGeneration::runNewton(cl_double* zoom, cl_int* res, cl_doubl
 		kernel = cl::Kernel(program, "newtonFraktal", &err);
 
 		cl::Buffer resBuf(context, CL_MEM_READ_ONLY, 2 * sizeof(cl_int));
-		cl::Buffer zerosBuf(context, CL_MEM_READ_ONLY, (this->paramc[0]-1) * sizeof(cl_complex));
-		cl::Buffer paramsBuf(context, CL_MEM_READ_ONLY, this->paramc[0] * sizeof(cl_complex));
-		cl::Buffer paramsDBuf(context, CL_MEM_READ_ONLY, this->paramc[1] * sizeof(cl_complex));
+		cl::Buffer zerosBuf(context, CL_MEM_READ_ONLY, (this->paramc[0] - 1) * sizeof(struct cl_complex));
+		cl::Buffer paramsBuf(context, CL_MEM_READ_ONLY, this->paramc[0] * sizeof(struct cl_complex));
+		cl::Buffer paramsDBuf(context, CL_MEM_READ_ONLY, this->paramc[1] * sizeof(struct cl_complex));
 		cl::Buffer paramcBuf(context, CL_MEM_READ_ONLY, 2 * sizeof(cl_int));
 		cl::Buffer offsetBuf(context, CL_MEM_READ_ONLY, 2 * sizeof(cl_int));
 		cl::Buffer zoomBuf(context, CL_MEM_READ_ONLY, 2 * sizeof(cl_double));
@@ -221,9 +220,9 @@ void NewtonFraktalCLGeneration::runNewton(cl_double* zoom, cl_int* res, cl_doubl
 		
 		queue.enqueueWriteBuffer(resBuf, CL_TRUE, 0, 2 * sizeof(cl_int), res);
 		queue.enqueueWriteBuffer(zoomBuf, CL_TRUE, 0, 2 * sizeof(cl_double), zoom);
-		queue.enqueueWriteBuffer(zerosBuf, CL_TRUE, 0, (this->paramc[0] - 1) * sizeof(cl_complex), this->zeros);
-		queue.enqueueWriteBuffer(paramsBuf, CL_TRUE, 0, this->paramc[0] * sizeof(cl_complex), this->params);
-		queue.enqueueWriteBuffer(paramsDBuf, CL_TRUE, 0, this->paramc[1] * sizeof(cl_complex), this->paramsD);
+		queue.enqueueWriteBuffer(zerosBuf, CL_TRUE, 0, (this->paramc[0] - 1) * sizeof(struct cl_complex), this->zeros);
+		queue.enqueueWriteBuffer(paramsBuf, CL_TRUE, 0, this->paramc[0] * sizeof(struct cl_complex), this->params);
+		queue.enqueueWriteBuffer(paramsDBuf, CL_TRUE, 0, this->paramc[1] * sizeof(struct cl_complex), this->paramsD);
 		queue.enqueueWriteBuffer(paramcBuf, CL_TRUE, 0, 2 * sizeof(cl_int), this->paramc);
 		queue.enqueueWriteBuffer(centerBuf, CL_TRUE, 0, 2 * sizeof(cl_double), center);
 
@@ -237,6 +236,7 @@ void NewtonFraktalCLGeneration::runNewton(cl_double* zoom, cl_int* res, cl_doubl
 
 		cl_int* offset = new cl_int[2];
 		offset[0] = 0;
+		offset[1] = 0;
 
 		cl::Buffer outBuf(context, CL_MEM_WRITE_ONLY, (res[0] * res[1] * sizeof(cl_double)));
 		cl::Buffer typeOutBuf(context, CL_MEM_WRITE_ONLY, (res[0] * res[1] * sizeof(cl_int)));
@@ -244,25 +244,24 @@ void NewtonFraktalCLGeneration::runNewton(cl_double* zoom, cl_int* res, cl_doubl
 		kernel.setArg(8, outBuf);
 		kernel.setArg(9, typeOutBuf);
 		kernel.setArg(10, itOutBuf);
+		//for (int i = 0; i < 4; i++){
+		//offset[0] = (res[0] / 4) * i;
+			//for (int j = 0; j < 4; j++){
+			//	Logger::log("Launching round %d\n", j + 1 + 4*i);
 
-		for (int i = 0; i < 4; i++){
-			offset[0] = (res[0] / 4) * i;
-			for (int j = 0; j < 4; j++){
-				Logger::log("Launching round %d\n", j + 1 + 4*i);
-
-				offset[1] = (res[1] / 4) * j;
+				//offset[1] = (res[1] / 4) * j;
 				queue.enqueueWriteBuffer(offsetBuf, CL_TRUE, 0, 2 * sizeof(cl_int), offset);
 				kernel.setArg(2, offsetBuf);
 
 				queue.enqueueNDRangeKernel(
 					kernel,
 					cl::NullRange,
-					cl::NDRange(res[0] / 4, res[1] / 4),
+					cl::NDRange(res[0]/*/4*/, res[1]/*/4*/),
 					cl::NullRange);
 
 				queue.finish();
-			}
-		}
+			//}
+		//}
 		queue.enqueueReadBuffer(outBuf, CL_TRUE, 0, res[0] * res[1] * sizeof(cl_double), result);
 		queue.enqueueReadBuffer(typeOutBuf, CL_TRUE, 0, res[0] * res[1] * sizeof(cl_int), typeRes);
 		queue.enqueueReadBuffer(itOutBuf, CL_TRUE, 0, res[0] * res[1] * sizeof(cl_int), iterations);

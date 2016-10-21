@@ -7,15 +7,20 @@ struct complex {
 	double re;
 	double r;
 	double phi;
+
+	char isPolar;
+	char isKarthes;
 };
 
 struct complex createComplexFromPolar(double _r, double _phi){
 	struct complex t;
 	t.r = _r;
 	t.phi = _phi;
+	t.isPolar = true;
 
 	t.re = _r*cos(_phi);
 	t.im = _r*sin(_phi);
+	t.isKarthes = true;
 
 	return t;
 }
@@ -24,9 +29,11 @@ struct complex createComplexFromKarthes(double real, double imag){
 	struct complex t;
 	t.re = real;
 	t.im = imag;
+	t.isKarthes = true;
 
 	t.phi = atan2(imag, real);
 	t.r = sqrt(t.re*t.re + t.im*t.im);
+	t.isPolar = true;
 
 	return t;
 }
@@ -39,40 +46,142 @@ struct complex recreateComplexFromPolar(struct complex t){
 	return createComplexFromPolar(t.r, t.phi);
 }
 
-struct complex addComplex(const struct complex z, const struct complex c){
-	return createComplexFromKarthes(c.re + z.re, c.im + z.im);
+struct complex getComplexKarthes(struct complex t) {
+	if (t.isKarthes)
+		return t;
+	else {
+		t.re = t.r*cos(t.phi);
+		t.im = t.r*sin(t.phi);
+		t.isKarthes = true;
+		return t;
+	}
+		//return recreateComplexFromPolar(t);
 }
 
-struct complex subComplex(const struct complex z, const struct complex c){
-	return createComplexFromKarthes(z.re - c.re, z.im - c.im);
+struct complex getComplexPolar(struct complex t) {
+	if (t.isPolar)
+		return t;
+	else {
+		t.phi = atan2(t.im, t.re);
+		t.r = sqrt(t.re*t.re + t.im*t.im);
+		t.isPolar = true;
+		return t;
+	}
+		//return recreateComplexFromKarthes(t);
 }
 
-struct complex addComplexScalar(const struct complex z, const double n){
-	return createComplexFromKarthes(z.re + n,z.im);
+struct complex addComplex(const struct complex a, const struct complex b){
+	struct complex z = getComplexKarthes(a);
+	struct complex c = getComplexKarthes(b);
+
+	struct complex t;
+	t.re = c.re + z.re;
+	t.im = c.im + z.im;
+	t.isKarthes = true;
+	t.isPolar = false;
+	return t;
+
+	//return createComplexFromKarthes(c.re + z.re, c.im + z.im);
 }
 
-struct complex subComplexScalar(const struct complex z, const double n){
-	return createComplexFromKarthes(z.re - n, z.im);
+struct complex subComplex(const struct complex a, const struct complex b){
+	struct complex z = getComplexKarthes(a);
+	struct complex c = getComplexKarthes(b);
+
+	struct complex t;
+	t.re = z.re - c.re;
+	t.im = z.im - c.im;
+	t.isKarthes = true;
+	t.isPolar = false;
+	return t;
+
+	//return createComplexFromKarthes(z.re - c.re, z.im - c.im);
 }
 
-struct complex multComplexScalar(const struct complex z, const double n){
-	return createComplexFromKarthes(z.re * n,z.im * n);
+struct complex addComplexScalar(const struct complex a, const double n){
+	struct complex z = getComplexKarthes(a);
+	
+	struct complex t;
+	t.re = z.re + n;
+	t.im = z.im;
+	t.isKarthes = true;
+	t.isPolar = false;
+	return t;
+
+	//return createComplexFromKarthes(z.re + n,z.im);
 }
 
-struct complex multComplex(const struct complex z, const struct complex c) {
-	return createComplexFromKarthes(z.re*c.re-z.im*c.im, z.re*c.im+z.im*c.re);
+struct complex subComplexScalar(const struct complex a, const double n){
+	struct complex z = getComplexKarthes(a);
+
+	struct complex t;
+	t.re = z.re - n;
+	t.im = z.im;
+	t.isKarthes = true;
+	t.isPolar = false;
+	return t;
+
+	//return createComplexFromKarthes(z.re - n, z.im);
+}
+
+struct complex multComplexScalar(const struct complex a, const double n){
+	struct complex z = getComplexKarthes(a);
+
+	struct complex t;
+	t.re = z.re * n;
+	t.im = z.im * n;
+	t.isKarthes = true;
+	t.isPolar = false;
+	return t;
+
+	//return createComplexFromKarthes(z.re * n,z.im * n);
+}
+
+struct complex multComplex(const struct complex a, const struct complex b) {
+	struct complex z = getComplexKarthes(a);
+	struct complex c = getComplexKarthes(b);
+
+	struct complex t;
+	t.re = z.re*c.re - z.im*c.im;
+	t.im = z.re*c.im + z.im*c.re;
+	t.isKarthes = true;
+	t.isPolar = false;
+	return t;
+
+	//return createComplexFromKarthes(z.re*c.re-z.im*c.im, z.re*c.im+z.im*c.re);
 	//return createComplexFromPolar(z.r*c.r, z.phi + c.phi);
 }
 
-struct complex powComplex(const struct complex z, int i){
-	return createComplexFromPolar(pow(z.r, (double)i), z.phi * i);
+struct complex powComplex(const struct complex a, int i){
+	struct complex z = getComplexPolar(a);
+
+	struct complex t;
+	t.r = pow(z.r, (double)i);
+	t.phi = z.phi * i;
+	t.isKarthes = false;
+	t.isPolar = true;
+	return t;
+
+	//return createComplexFromPolar(pow(z.r, (double)i), z.phi * i);
 }
 
-struct complex divComplex(const struct complex z, const struct complex c) {
-		return createComplexFromPolar(z.r / c.r, z.phi-c.phi);
+struct complex divComplex(const struct complex a, const struct complex b) {
+	struct complex z = getComplexPolar(a);
+	struct complex c = getComplexPolar(b);
+
+	struct complex t;
+	t.r = z.r / c.r;
+	t.phi = z.phi - c.phi;
+	t.isKarthes = false;
+	t.isPolar = true;
+	return t;
+		//return createComplexFromPolar(z.r / c.r, z.phi-c.phi);
 }
 
-bool compComplex(const struct complex z, const struct complex c, double comp){
+bool compComplex(const struct complex a, const struct complex b, double comp){
+	struct complex z = getComplexKarthes(a);
+	struct complex c = getComplexKarthes(b);
+
 	if (fabs(z.re - c.re) <= comp && fabs(z.im - c.im) <= comp)
 		return true;
 	return false;
@@ -146,7 +255,7 @@ __kernel void newtonFraktal(__global const int* res, __global const double* zoom
 		for (int j = 0; j < paramc[0] - 1; j++){
 			if (compComplex(z, zeros[j], RESOLUTION)){
 				resType[x + xRes * y] = j;
-				result[x + xRes * y] = (log(RESOLUTION) - log(subComplex(zo, zeros[j]).r)) / (log(subComplex(z, zeros[j]).r) - log(subComplex(zo, zeros[j]).r));
+				result[x + xRes * y] = (log(RESOLUTION) - log(getComplexPolar(subComplex(zo, zeros[j])).r)) / (log(getComplexPolar(subComplex(z, zeros[j])).r) - log(getComplexPolar(subComplex(zo, zeros[j])).r));
 				found = true;
 				break;
 			}
