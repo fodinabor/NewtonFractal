@@ -1,10 +1,33 @@
+/*
+The MIT License (MIT)
+
+Copyright (c) 2016 By Joachim Meyer
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 #include "NewtonFraktalApp.h"
 #include <ctime>
 #include <time.h>
 #include <cmath>
 
 #define pi 3.14159265359
-extern struct cl_complex;
 extern bool compComplex(const std::complex<cl_double> z, const std::complex<cl_double> c, double comp);
 
 int colors[] = {
@@ -39,7 +62,6 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 	CoreServices::getInstance()->getResourceManager()->addArchive("default.pak");
 	CoreServices::getInstance()->getResourceManager()->addDirResource("default", false);
 	CoreServices::getInstance()->getResourceManager()->addArchive("UIThemes.pak");
-	/*CoreServices::getInstance()->getResourceManager()->addDirResource("", true);*/
 	CoreServices::getInstance()->getConfig()->loadConfig("Polycode", "theme.xml");
 	Services()->getRenderer()->setClearColor(Color::ColorWithHex(0x494949ff));
 
@@ -55,12 +77,12 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 
 	clOptionsSet = false;
 
-	//polynom = new Polynom();
-	polynom = Polynom::readFromString("( 4 + 2 i)*x^ 18 + ( 7 + 9 i)*x^ 17 + ( 3 + 11 i)*x^ 16 + ( 6 + 2 i)*x^ 15 + ( 5 + 8 i)*x^ 14 + ( 11 + 6 i)*x^ 13 + ( 7 + 7 i)*x^ 12 + ( 3 + 2 i)*x^ 11 + ( 9 + 6 i)*x^ 10 + ( 6 + 12 i)*x^ 9 + ( 2 + 10 i)*x^ 8 + ( 11 + 1 i)*x^ 7 + ( 12 + 1 i)*x^ 6 + ( 5 + 5 i)*x^ 5 + ( 14 + 7 i)*x^ 4 + ( 3 + 3 i)*x^ 3 + ( 4 + 14 i)*x^ 2 + ( 10 + 4 i)*x + ( 2 + 11 i)");
-	//polynom->addCoefficient(complex<cl_double>(-1, 0));
-	//polynom->addCoefficient(complex<cl_double>(0, 0));
-	//polynom->addCoefficient(complex<cl_double>(0, 0));
-	//polynom->addCoefficient(complex<cl_double>(1, 0));
+	polynom = new Polynom();
+	//polynom = Polynom::readFromString("( 4 + 2 i)*x^ 18 + ( 7 + 9 i)*x^ 17 + ( 3 + 11 i)*x^ 16 + ( 6 + 2 i)*x^ 15 + ( 5 + 8 i)*x^ 14 + ( 11 + 6 i)*x^ 13 + ( 7 + 7 i)*x^ 12 + ( 3 + 2 i)*x^ 11 + ( 9 + 6 i)*x^ 10 + ( 6 + 12 i)*x^ 9 + ( 2 + 10 i)*x^ 8 + ( 11 + 1 i)*x^ 7 + ( 12 + 1 i)*x^ 6 + ( 5 + 5 i)*x^ 5 + ( 14 + 7 i)*x^ 4 + ( 3 + 3 i)*x^ 3 + ( 4 + 14 i)*x^ 2 + ( 10 + 4 i)*x + ( 2 + 11 i)");
+	polynom->addCoefficient(complex<cl_double>(-1, 0));
+	polynom->addCoefficient(complex<cl_double>(0, 0));
+	polynom->addCoefficient(complex<cl_double>(0, 0));
+	polynom->addCoefficient(complex<cl_double>(1, 0));
 
 	//Performance Test Polynom
 	//polynom->addCoefficient(complex<cl_double>(-1, 0));
@@ -117,8 +139,8 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 	derivation->printPolynom();
 
 	res = new cl_int[2];
-	res[0] = core->getXRes() * 1;
-	res[1] = core->getYRes() * 1;
+	res[0] = core->getXRes() * 2;
+	res[1] = core->getYRes() * 2;
 
 	ratio = (double)res[1] / (double)res[0];
 
@@ -560,12 +582,14 @@ void NewtonFraktalApp::handleEvent(Event* e){
 				startPoint = ie->getMousePosition();
 			}
 		} else if (e->getEventCode() == InputEvent::EVENT_KEYDOWN){
-			switch (ie->key){
-			case PolyKEY::KEY_RETURN:
-				redrawIt();
-				break;
-			default:
-				break;
+			if (!redrawWinButton->hasFocus) {
+				switch (ie->key) {
+				case PolyKEY::KEY_RETURN:
+					redrawIt();
+					break;
+				default:
+					break;
+				}
 			}
 		}
 	}

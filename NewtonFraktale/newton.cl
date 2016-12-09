@@ -1,3 +1,26 @@
+/*
+The MIT License (MIT)
+
+Copyright (c) 2016 By Joachim Meyer
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 #define pi 3.14159265359
 #define RESOLUTION 0.0000000001
@@ -55,7 +78,6 @@ struct complex getComplexKarthes(struct complex t) {
 		t.isKarthes = true;
 		return t;
 	}
-		//return recreateComplexFromPolar(t);
 }
 
 struct complex getComplexPolar(struct complex t) {
@@ -67,7 +89,6 @@ struct complex getComplexPolar(struct complex t) {
 		t.isPolar = true;
 		return t;
 	}
-		//return recreateComplexFromKarthes(t);
 }
 
 struct complex addComplex(const struct complex a, const struct complex b){
@@ -80,8 +101,6 @@ struct complex addComplex(const struct complex a, const struct complex b){
 	t.isKarthes = true;
 	t.isPolar = false;
 	return t;
-
-	//return createComplexFromKarthes(c.re + z.re, c.im + z.im);
 }
 
 struct complex subComplex(const struct complex a, const struct complex b){
@@ -94,8 +113,6 @@ struct complex subComplex(const struct complex a, const struct complex b){
 	t.isKarthes = true;
 	t.isPolar = false;
 	return t;
-
-	//return createComplexFromKarthes(z.re - c.re, z.im - c.im);
 }
 
 struct complex addComplexScalar(const struct complex a, const double n){
@@ -107,8 +124,6 @@ struct complex addComplexScalar(const struct complex a, const double n){
 	t.isKarthes = true;
 	t.isPolar = false;
 	return t;
-
-	//return createComplexFromKarthes(z.re + n,z.im);
 }
 
 struct complex subComplexScalar(const struct complex a, const double n){
@@ -120,8 +135,6 @@ struct complex subComplexScalar(const struct complex a, const double n){
 	t.isKarthes = true;
 	t.isPolar = false;
 	return t;
-
-	//return createComplexFromKarthes(z.re - n, z.im);
 }
 
 struct complex multComplexScalar(const struct complex a, const double n){
@@ -133,8 +146,6 @@ struct complex multComplexScalar(const struct complex a, const double n){
 	t.isKarthes = true;
 	t.isPolar = false;
 	return t;
-
-	//return createComplexFromKarthes(z.re * n,z.im * n);
 }
 
 struct complex multComplex(const struct complex a, const struct complex b) {
@@ -147,9 +158,6 @@ struct complex multComplex(const struct complex a, const struct complex b) {
 	t.isKarthes = true;
 	t.isPolar = false;
 	return t;
-
-	//return createComplexFromKarthes(z.re*c.re-z.im*c.im, z.re*c.im+z.im*c.re);
-	//return createComplexFromPolar(z.r*c.r, z.phi + c.phi);
 }
 
 struct complex powComplex(const struct complex a, int i){
@@ -161,8 +169,6 @@ struct complex powComplex(const struct complex a, int i){
 	t.isKarthes = false;
 	t.isPolar = true;
 	return t;
-
-	//return createComplexFromPolar(pow(z.r, (double)i), z.phi * i);
 }
 
 struct complex divComplex(const struct complex a, const struct complex b) {
@@ -175,7 +181,6 @@ struct complex divComplex(const struct complex a, const struct complex b) {
 	t.isKarthes = false;
 	t.isPolar = true;
 	return t;
-		//return createComplexFromPolar(z.r / c.r, z.phi-c.phi);
 }
 
 bool compComplex(const struct complex a, const struct complex b, double comp){
@@ -190,9 +195,8 @@ bool compComplex(const struct complex a, const struct complex b, double comp){
 struct complex computeFunction(const struct complex z, __global const struct complex* params, const int paramc){
 	struct complex sum = createComplexFromKarthes(0,0);
 	struct complex pow;
-	for (unsigned int i = 0; i<paramc; i++) {
-		pow = powComplex(z, i);
-		sum = addComplex(sum, multComplex(pow, params[i]));
+	for (unsigned int i = 1; i<=paramc; i++) {
+		sum = addComplex(multComplex(sum, z), params[paramc-i]);
 	}
 	return sum;
 }
@@ -242,7 +246,7 @@ __kernel void newtonFraktal(__global const int* res, __global const double* zoom
 
 	bool found = false;
 	int i = 0;
-	while (i < 600 /*&& fabs(z.r) < 100000*/ && !found){
+	while (i < 500 && !found){
 		f = computeFunction(z, params, paramc[0]);
 		d = computeFunction(z, paramsD, paramc[1]);
 
@@ -266,8 +270,6 @@ __kernel void newtonFraktal(__global const int* res, __global const double* zoom
 			break;
 		}
 	}
-	/*if (fabs(z.r) >= 100000){
-		resType[x + xRes * y] = -2;
-	}*/
+
 	iterations[x + xRes * y] = i;
 }
