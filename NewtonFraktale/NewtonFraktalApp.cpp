@@ -79,32 +79,32 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 
 	polynom = new Polynom();
 	//polynom = Polynom::readFromString("( 4 + 2 i)*x^ 18 + ( 7 + 9 i)*x^ 17 + ( 3 + 11 i)*x^ 16 + ( 6 + 2 i)*x^ 15 + ( 5 + 8 i)*x^ 14 + ( 11 + 6 i)*x^ 13 + ( 7 + 7 i)*x^ 12 + ( 3 + 2 i)*x^ 11 + ( 9 + 6 i)*x^ 10 + ( 6 + 12 i)*x^ 9 + ( 2 + 10 i)*x^ 8 + ( 11 + 1 i)*x^ 7 + ( 12 + 1 i)*x^ 6 + ( 5 + 5 i)*x^ 5 + ( 14 + 7 i)*x^ 4 + ( 3 + 3 i)*x^ 3 + ( 4 + 14 i)*x^ 2 + ( 10 + 4 i)*x + ( 2 + 11 i)");
-	polynom->addCoefficient(complex<cl_double>(-1, 0));
-	polynom->addCoefficient(complex<cl_double>(0, 0));
-	polynom->addCoefficient(complex<cl_double>(0, 0));
-	polynom->addCoefficient(complex<cl_double>(1, 0));
+	//polynom->addCoefficient(complex<cl_double>(-1, 0));
+	//polynom->addCoefficient(complex<cl_double>(0, 0));
+	//polynom->addCoefficient(complex<cl_double>(0, 0));
+	//polynom->addCoefficient(complex<cl_double>(1, 0));
 
 	//Performance Test Polynom
-	//polynom->addCoefficient(complex<cl_double>(-1, 0));
-	//polynom->addCoefficient(complex<cl_double>(0, 1));
-	//polynom->addCoefficient(complex<cl_double>(1, 1));
-	//polynom->addCoefficient(complex<cl_double>(1, 0));
-	//polynom->addCoefficient(complex<cl_double>(1, 0));
-	//polynom->addCoefficient(complex<cl_double>(1, 9));
-	//polynom->addCoefficient(complex<cl_double>(3,1));
-	//polynom->addCoefficient(complex<cl_double>(1, 9));
-	//polynom->addCoefficient(complex<cl_double>(2, 5));
-	//polynom->addCoefficient(complex<cl_double>(1, 3));
-	//polynom->addCoefficient(complex<cl_double>(2, 1));
-	//polynom->addCoefficient(complex<cl_double>(3, 2));
-	//polynom->addCoefficient(complex<cl_double>(9, 2));
-	//polynom->addCoefficient(complex<cl_double>(12, 3));
-	//polynom->addCoefficient(complex<cl_double>(3, 9));
-	//polynom->addCoefficient(complex<cl_double>(0, 1));
-	//polynom->addCoefficient(complex<cl_double>(7, 1));
-	//polynom->addCoefficient(complex<cl_double>(2, 4));
-	//polynom->addCoefficient(complex<cl_double>(4, 3));
-	//polynom->addCoefficient(complex<cl_double>(1, 0));
+	polynom->addCoefficient(complex<cl_double>(-1, 0));
+	polynom->addCoefficient(complex<cl_double>(0, 1));
+	polynom->addCoefficient(complex<cl_double>(1, 1));
+	polynom->addCoefficient(complex<cl_double>(1, 0));
+	polynom->addCoefficient(complex<cl_double>(1, 0));
+	polynom->addCoefficient(complex<cl_double>(1, 9));
+	polynom->addCoefficient(complex<cl_double>(3,1));
+	polynom->addCoefficient(complex<cl_double>(1, 9));
+	polynom->addCoefficient(complex<cl_double>(2, 5));
+	polynom->addCoefficient(complex<cl_double>(1, 3));
+	polynom->addCoefficient(complex<cl_double>(2, 1));
+	polynom->addCoefficient(complex<cl_double>(3, 2));
+	polynom->addCoefficient(complex<cl_double>(9, 2));
+	polynom->addCoefficient(complex<cl_double>(12, 3));
+	polynom->addCoefficient(complex<cl_double>(3, 9));
+	polynom->addCoefficient(complex<cl_double>(0, 1));
+	polynom->addCoefficient(complex<cl_double>(7, 1));
+	polynom->addCoefficient(complex<cl_double>(2, 4));
+	polynom->addCoefficient(complex<cl_double>(4, 3));
+	polynom->addCoefficient(complex<cl_double>(1, 0));
 
 	//polynom->addCoefficient(complex<cl_double>(rand() % 15, rand() % 15));
 	//polynom->addCoefficient(complex<cl_double>(rand() % 15, rand() % 15));
@@ -340,8 +340,11 @@ void NewtonFraktalApp::drawFractal(){
 	const int yRes = res[1];
 	bool cl;
 
-	std::vector<double> result, iterations;
-	std::vector<int> typeRes;
+	double *result = (double*)malloc(res[0] * res[1] * sizeof(double)), *iterations = (double*)malloc(res[0] * res[1] * sizeof(double));
+	int *typeRes = (int*)malloc(res[0] * res[1] * sizeof(int));
+
+	//std::vector<double> result, iterations;
+	//std::vector<int> typeRes;
 	if (genCL && genCL->err == CL_SUCCESS){
 		cl = true;
 	} else {
@@ -426,9 +429,12 @@ void NewtonFraktalApp::drawFractal(){
 		//free(genCL->typeRes);
 		//free(genCL->iterations);
 	} else {
-		result.clear();
-		typeRes.clear();
-		iterations.clear();
+		free(result);
+		free(typeRes);
+		free(iterations);
+		//result.clear();
+		//typeRes.clear();
+		//iterations.clear();
 	}
 }
 
@@ -438,7 +444,7 @@ void NewtonFraktalApp::findZeros(){
 		for (int x = -200; x < 200; x++) {
 			std::complex<cl_double> z(x, y);
 			std::complex<cl_double> zo(0, 0);
-			for (int i = 0; i < 1000; i++) {
+			for (int i = 0; i < 600; i++) {
 				zo = z;
 				z = z - polynom->getValue(z) / derivation->getValue(z);
 				if (compComplex(z, zo, RESOLUTION)) {
@@ -469,7 +475,7 @@ void NewtonFraktalApp::findZeros(){
 	}
 }
 
-void NewtonFraktalApp::runNewton(std::vector<double> &result, std::vector<double> &iterations, std::vector<int> &typeRes){
+void NewtonFraktalApp::runNewton(double *result, double *iterations, int *typeRes) {
 	std::complex<double> z, zo, p, d;
 	const int xRes = res[0];
 	const int yRes = res[1];
@@ -480,12 +486,12 @@ void NewtonFraktalApp::runNewton(std::vector<double> &result, std::vector<double
 			const double b = (double)zoom[1] * (((double)yRes / 2.0) - (double)y) / yRes + centerCL[1];
 
 			z = complex<double>(a, b);
-			typeRes.push_back(-1);
-			result.push_back(0);
+			typeRes[x + xRes * y] = -1;
+			result[x + xRes * y] = 0;
 
 			bool found = false;
 			int i = 0;
-			while (i < 6000 && abs(z) < 100000 && !found) {
+			while (i < 600 && !found) {
 				p = polynom->getValue(z);
 				d = derivation->getValue(z);
 				
@@ -495,24 +501,21 @@ void NewtonFraktalApp::runNewton(std::vector<double> &result, std::vector<double
 
 				i++;
 
-				for (int j = 0; j < polynom->getNumCoefficients() - 1; j++) {
+				for (int j = 0; j < zeros.size(); j++) {
 					if (compComplex(z, zeros[j], RESOLUTION)) {
-						typeRes[typeRes.size()-1] = j;
-						result[x + y * res[0]] = (log(RESOLUTION) - log(abs(zo - zeros[j]))) / (log(abs(z - zeros[j])) - log(abs(zo - zeros[j])));
+						typeRes[x + xRes * y] = j;
+						result[x + y * xRes] = (log(RESOLUTION) - log(abs(zo - zeros[j]))) / (log(abs(z - zeros[j])) - log(abs(zo - zeros[j])));
 						found = true;
 						break;
 					}
 				}
 
-				if (compComplex(z, zo, RESOLUTION / 10) && !found) {
-					typeRes[typeRes.size()-1] = -1;
+				if (compComplex(z, zo, RESOLUTION / 100) && !found) {
+					typeRes[x + xRes * y] = -1;
 					break;
 				}
 			}
-			if (abs(z) >= 10000) {
-				typeRes[typeRes.size()-1] = -1;
-			}
-			iterations.push_back(i);
+			iterations[x + xRes * y] = i;
 		}
 	}
 }

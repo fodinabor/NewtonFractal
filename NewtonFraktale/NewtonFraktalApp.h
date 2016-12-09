@@ -47,7 +47,7 @@ public:
 	NewtonFraktalApp(PolycodeView *view);
 	~NewtonFraktalApp();
     
-	void runNewton(std::vector<double> &result, std::vector<double> &iterations, std::vector<int> &typeRes);
+	void runNewton(double *result, double *iterations, int *typeRes);
 	void findZeros();
 
 	void drawFractal();

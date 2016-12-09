@@ -47,8 +47,9 @@ complex<cl_double> Polynom::getValue(complex<cl_double> nC){
 	complex<cl_double> sum = complex<cl_double>(0, 0);
 	complex<cl_double> pow;
 	for (unsigned int i = 0; i < coefficients.size(); i++){
-		pow = std::pow(nC,i);
-		sum = sum + (coefficients[i] * pow);
+		//pow = std::pow(nC,i);
+		//sum = sum + (coefficients[i] * pow);
+		sum = coefficients[coefficients.size() - i - 1] + (sum * nC);
 	}
 	return sum;
 }
