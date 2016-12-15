@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
+#define MAX_DEGREE 23
 
 #include "PolycodeView.h"
 #include "Polycode.h"
@@ -61,8 +62,9 @@ private:
 	Scene *ui;
 	Scene *selScene;
 
-	int* getMaxAndMin(int *data);
+	//int* getMaxAndMin(int *data);
 	void redrawIt();
+	void generateRandom();
 
 	NewtonFraktalCLGeneration* genCL;
 
@@ -82,7 +84,11 @@ private:
 	UILabel* center;
 	UITextInput *centerX;
 	UITextInput *centerY;
+	UILabel* contrastLabel;
+	UIHSlider *contrastSlider;
+	UITextInput *contrastInput;
 	UIButton *redrawWinButton;
+	UIButton *randomGenButton;
 	UIButton *openOptions;
 	SceneImage *centerSel;
 	UILabel* zoomL;
@@ -90,6 +96,8 @@ private:
 	SceneImage *zoomSel;
 	bool dragging;
 	Vector2 startPoint;
+
+	Number contrastValue;
 
 	bool centerDirty;
 
@@ -105,4 +113,6 @@ private:
 	bool useCPU;
 
 	clock_t begin, end;
+
+	Number timer;
 };

@@ -77,34 +77,36 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 
 	clOptionsSet = false;
 
+	srand(time(NULL));
+
 	polynom = new Polynom();
 	//polynom = Polynom::readFromString("( 4 + 2 i)*x^ 18 + ( 7 + 9 i)*x^ 17 + ( 3 + 11 i)*x^ 16 + ( 6 + 2 i)*x^ 15 + ( 5 + 8 i)*x^ 14 + ( 11 + 6 i)*x^ 13 + ( 7 + 7 i)*x^ 12 + ( 3 + 2 i)*x^ 11 + ( 9 + 6 i)*x^ 10 + ( 6 + 12 i)*x^ 9 + ( 2 + 10 i)*x^ 8 + ( 11 + 1 i)*x^ 7 + ( 12 + 1 i)*x^ 6 + ( 5 + 5 i)*x^ 5 + ( 14 + 7 i)*x^ 4 + ( 3 + 3 i)*x^ 3 + ( 4 + 14 i)*x^ 2 + ( 10 + 4 i)*x + ( 2 + 11 i)");
-	//polynom->addCoefficient(complex<cl_double>(-1, 0));
-	//polynom->addCoefficient(complex<cl_double>(0, 0));
-	//polynom->addCoefficient(complex<cl_double>(0, 0));
-	//polynom->addCoefficient(complex<cl_double>(1, 0));
+	polynom->addCoefficient(complex<cl_double>(-1, 0));
+	polynom->addCoefficient(complex<cl_double>(0, 0));
+	polynom->addCoefficient(complex<cl_double>(0, 0));
+	polynom->addCoefficient(complex<cl_double>(1, 0));
 
 	//Performance Test Polynom
-	polynom->addCoefficient(complex<cl_double>(-1, 0));
-	polynom->addCoefficient(complex<cl_double>(0, 1));
-	polynom->addCoefficient(complex<cl_double>(1, 1));
-	polynom->addCoefficient(complex<cl_double>(1, 0));
-	polynom->addCoefficient(complex<cl_double>(1, 0));
-	polynom->addCoefficient(complex<cl_double>(1, 9));
-	polynom->addCoefficient(complex<cl_double>(3,1));
-	polynom->addCoefficient(complex<cl_double>(1, 9));
-	polynom->addCoefficient(complex<cl_double>(2, 5));
-	polynom->addCoefficient(complex<cl_double>(1, 3));
-	polynom->addCoefficient(complex<cl_double>(2, 1));
-	polynom->addCoefficient(complex<cl_double>(3, 2));
-	polynom->addCoefficient(complex<cl_double>(9, 2));
-	polynom->addCoefficient(complex<cl_double>(12, 3));
-	polynom->addCoefficient(complex<cl_double>(3, 9));
-	polynom->addCoefficient(complex<cl_double>(0, 1));
-	polynom->addCoefficient(complex<cl_double>(7, 1));
-	polynom->addCoefficient(complex<cl_double>(2, 4));
-	polynom->addCoefficient(complex<cl_double>(4, 3));
-	polynom->addCoefficient(complex<cl_double>(1, 0));
+	//polynom->addCoefficient(complex<cl_double>(-1, 0));
+	//polynom->addCoefficient(complex<cl_double>(0, 1));
+	//polynom->addCoefficient(complex<cl_double>(1, 1));
+	//polynom->addCoefficient(complex<cl_double>(1, 0));
+	//polynom->addCoefficient(complex<cl_double>(1, 0));
+	//polynom->addCoefficient(complex<cl_double>(1, 9));
+	//polynom->addCoefficient(complex<cl_double>(3,1));
+	//polynom->addCoefficient(complex<cl_double>(1, 9));
+	//polynom->addCoefficient(complex<cl_double>(2, 5));
+	//polynom->addCoefficient(complex<cl_double>(1, 3));
+	//polynom->addCoefficient(complex<cl_double>(2, 1));
+	//polynom->addCoefficient(complex<cl_double>(3, 2));
+	//polynom->addCoefficient(complex<cl_double>(9, 2));
+	//polynom->addCoefficient(complex<cl_double>(12, 3));
+	//polynom->addCoefficient(complex<cl_double>(3, 9));
+	//polynom->addCoefficient(complex<cl_double>(0, 1));
+	//polynom->addCoefficient(complex<cl_double>(7, 1));
+	//polynom->addCoefficient(complex<cl_double>(2, 4));
+	//polynom->addCoefficient(complex<cl_double>(4, 3));
+	//polynom->addCoefficient(complex<cl_double>(1, 0));
 
 	//polynom->addCoefficient(complex<cl_double>(rand() % 15, rand() % 15));
 	//polynom->addCoefficient(complex<cl_double>(rand() % 15, rand() % 15));
@@ -251,11 +253,36 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 	zoomField->setText(String::NumberToString(zoom[0]));
 	zoomField->addEventListener(this, UIEvent::CHANGE_EVENT);
 
+	contrastLabel = new UILabel("Kontrast:", 12);
+	win->addChild(contrastLabel);
+	contrastLabel->setPosition(12, 220);
+
+	contrastValue = 0.5;
+
+	contrastSlider = new UIHSlider(0.0, 1.0, 100);
+	contrastSlider->setPosition(12, 240);
+	contrastSlider->setContinuous(true);
+	contrastSlider->setSliderValue(contrastValue);
+	win->addFocusChild(contrastSlider);
+	contrastSlider->addEventListener(this, UIEvent::CHANGE_EVENT);
+
+	contrastInput = new UITextInput(false, 270, 12);
+	contrastInput->setNumberOnly(true);
+	contrastInput->setPosition(120, 235);
+	win->addFocusChild(contrastInput);
+	contrastInput->setText(String::NumberToString(contrastValue));
+	contrastInput->addEventListener(this, UIEvent::CHANGE_EVENT);
+
 	redrawWinButton = new UIButton("Draw", 40);
-	win->addFocusChild(redrawWinButton);
+	win->addChild(redrawWinButton);
 	redrawWinButton->setPosition(12, win->getHeight() - 40);
 	redrawWinButton->addEventListener(this, UIEvent::CLICK_EVENT);
 	
+	randomGenButton = new UIButton("Random", 50);
+	win->addChild(randomGenButton);
+	randomGenButton->setPosition(56, win->getHeight() - 40);
+	randomGenButton->addEventListener(this, UIEvent::CLICK_EVENT);
+
 	redraw = new UIButton("Redraw", 60);
 	redraw->setPositionX(85);
 	redraw->addEventListener(this, UIEvent::CLICK_EVENT);
@@ -271,20 +298,25 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 	win->focusChild(NULL);
 	dragging = false;
 	useCPU = true;
+	startPoint.x = 0.0;
+	startPoint.y = 0.0;
 }
 
 NewtonFraktalApp::~NewtonFraktalApp() { }
 
 bool NewtonFraktalApp::Update() {
 	if (dragging || (centerDirty && zoomSel->visible)) {
+		if (timer <= 0.1)
+			timer += core->getElapsed();
+
 		double size;
 		if (dragging) {
 			size = max(abs(Services()->getInput()->mousePosition.x - startPoint.x), abs(Services()->getInput()->mousePosition.y - startPoint.y));
 		} else if (centerDirty) {
-			size = mapCL((cl_double)zoomField->getText().toNumber(), 0, zoom[0], 0, core->getXRes());
+			size = mapCL((cl_double) zoomField->getText().toNumber(), 0, zoom[0], 0, core->getXRes());
 		}
 
-		if (size * (size * ratio) * 3 < MAXINT) {
+		if (size * (size * ratio) * 3 < MAXINT && size > RESOLUTION / 100) {
 			Image *zoomSelector = new Image(size, size * ratio);
 			zoomSelector->fill(Color(0.0, 0.0, 0.0, 0.0));
 			zoomSelector->fillRect(0, 0, zoomSelector->getWidth(), 3, Color(1.0, 0.0, 0.0, 0.7));
@@ -315,14 +347,13 @@ bool NewtonFraktalApp::Update() {
 					zoomSel->setPositionY(startPoint.y - zoomSel->getHeight() / 2);
 				}
 			} else if (centerDirty) {
-				double x = mapCL((cl_double)centerX->getText().toNumber() - this->centerCL[0], -(zoom[0]) / 2, (zoom[0]) / 2, 0, core->getXRes());
-				double y = mapCL((cl_double)-(centerY->getText().toNumber() - this->centerCL[1]), -(zoom[1]) / 2, (zoom[1]) / 2, 0, core->getYRes());
+				double x = mapCL((cl_double) centerX->getText().toNumber() - this->centerCL[0], -(zoom[0]) / 2, (zoom[0]) / 2, 0, core->getXRes());
+				double y = mapCL((cl_double) -(centerY->getText().toNumber() - this->centerCL[1]), -(zoom[1]) / 2, (zoom[1]) / 2, 0, core->getYRes());
 				zoomSel->setPosition(x, y);
 				centerDirty = false;
 			}
 		}
 	}
-
 	bool update = core->updateAndRender();
 	
 	if (clOptionsJustSet) {
@@ -343,8 +374,6 @@ void NewtonFraktalApp::drawFractal(){
 	double *result = (double*)malloc(res[0] * res[1] * sizeof(double)), *iterations = (double*)malloc(res[0] * res[1] * sizeof(double));
 	int *typeRes = (int*)malloc(res[0] * res[1] * sizeof(int));
 
-	//std::vector<double> result, iterations;
-	//std::vector<int> typeRes;
 	if (genCL && genCL->err == CL_SUCCESS){
 		cl = true;
 	} else {
@@ -370,8 +399,13 @@ void NewtonFraktalApp::drawFractal(){
 		}
 	}
 
-	maxIters = maxIters / ((double)polynom->getNumCoefficients() / ((double)polynom->getNumCoefficients()/3.0));
+	BezierCurve* colorCurve = new BezierCurve();
 	
+	colorCurve->setHeightCacheResolution(4096);
+
+	colorCurve->addControlPoint2dWithHandles(maxIters * -0.01, 1.5, maxIters * 0.0, 1.0, maxIters * 0.01, 0.5 * contrastValue);
+	colorCurve->addControlPoint2dWithHandles(maxIters * 0.375 * contrastValue, 0.01, maxIters * 1.0, 0.0, maxIters * 1.3, -0.01);
+
 	for (int y = 0; y < yRes; y++){
 		for (int x = 0; x < xRes; x++){
 			int type;
@@ -389,22 +423,21 @@ void NewtonFraktalApp::drawFractal(){
 			if (type >= 0){
 				Color col;
 				col.setColorHexRGB(colors[type]);
-				conDiv = (double)it + conDiv;
-				//conDiv = log10(mapCL(conDiv + it,0.0,maxIters+1.0,1.0,10.0));
+				conDiv = it + conDiv;
 
-				//double mapped = mapCL(conDiv + it, 0.0, maxIters + 1.0, 0.0, 1.0);
-				//conDiv = pow(mapped,3);
 				if (conDiv > maxIters)
 					conDiv = maxIters;
 				if (conDiv < 0.3)
 					conDiv = 0.3;
-				col.setColorHSV(col.getHue(), col.getSaturation(), (1.0 - /*conDiv*/mapCL(conDiv, 0, maxIters, 0.0, 1.0)));
+
+				conDiv = colorCurve->getYValueAtX(conDiv);
+				col.setColorHSV(col.getHue(), col.getSaturation(), conDiv);
 				fraktal->setPixel(x, y, col);
 			} else {
 				if(type == -1)
 					fraktal->setPixel(x, y, 0, 0, 0, 1);
 				else 
-					fraktal->setPixel(x, y, 1, 1, 0, 1);
+					fraktal->setPixel(x, y, 1, 1, 1, 1);
 			}
 		}
 	}
@@ -412,7 +445,7 @@ void NewtonFraktalApp::drawFractal(){
 	FILE* logFile;
 	fopen_s(&logFile, "polynoms.log", "a");
 	String timeS = String::IntToString(time(NULL)), polynomS = polynom->printPolynom();
-	fprintf(logFile, "Time: %s, Polynom: %s, Center: %.15Lf, %.15Lf, Area size: x: %.15Lf y: %.15Lf, MaxIters: %f, The computation took: %s seconds\n", timeS.c_str(), polynomS.c_str(), centerCL[0], centerCL[1], zoom[0], zoom[1], maxIters, String::NumberToString(double(end - begin) / CLOCKS_PER_SEC).c_str());
+	fprintf(logFile, "Time: %s, Polynom: %s, Center: %.15Lf, %.15Lf, Area size: x: %.15Lf y: %.15Lf, Contrast: %f, MaxIters: %f, The computation took: %s seconds\n", timeS.c_str(), polynomS.c_str(), centerCL[0], centerCL[1], zoom[0], zoom[1], contrastValue, maxIters, String::NumberToString(double(end - begin) / CLOCKS_PER_SEC).c_str());
 	fraktal->saveImage(timeS + ".png");
 	fclose(logFile);
 
@@ -425,16 +458,11 @@ void NewtonFraktalApp::drawFractal(){
 	scene->addChild(sceneFraktal);
 
 	if (cl) {
-		//free(genCL->result);
-		//free(genCL->typeRes);
-		//free(genCL->iterations);
+
 	} else {
 		free(result);
 		free(typeRes);
 		free(iterations);
-		//result.clear();
-		//typeRes.clear();
-		//iterations.clear();
 	}
 }
 
@@ -457,6 +485,8 @@ void NewtonFraktalApp::findZeros(){
 		y++;
 	}
 	
+	zeros.clear();
+
 	for (int i = 0; i < zerosT.size(); i++){
 		if (zerosT[i].real() == 10000 && zerosT[i].imag() == 10000)
 			continue;
@@ -563,31 +593,43 @@ void NewtonFraktalApp::handleEvent(Event* e){
 		return;
 
 	if (e->getDispatcher() == redraw){
+		polynom = Polynom::readFromString(polynomInput->getText());
 		redrawIt();
 	} else if (e->getDispatcher() == redrawWinButton){
+		polynom = Polynom::readFromString(polynomInput->getText());
 		redrawIt();
-	} else if (e->getDispatcher() == openOptions){
+	} else if (e->getDispatcher() == openOptions) {
 		win->showWindow();
+	} else if (e->getDispatcher() == contrastSlider) {
+		contrastValue = contrastSlider->getSliderValue();
+		contrastInput->setText(String::NumberToString(contrastValue, 6));
+	} else if (e->getDispatcher() == contrastInput) {
+		contrastValue = contrastInput->getText().toNumber();
+		contrastSlider->setSliderValue(contrastValue);
+	} else if (e->getDispatcher() == randomGenButton) {
+		generateRandom();
 	} else if ((e->getDispatcher() == centerX || e->getDispatcher() == centerY || e->getDispatcher()==zoomField)) {
 		centerDirty = true;
 	} else if (e->getDispatcher() == core->getInput()) {
 		InputEvent* ie = (InputEvent*)e;
 		if (e->getEventCode() == InputEvent::EVENT_MOUSEUP){
-			if (dragging){
-				centerX->setText(String::NumberToString(mapCL((cl_double)zoomSel->getPosition().x, 0, core->getXRes(), -(zoom[0]) / 2, (zoom[0]) / 2) + this->centerCL[0], 15),false);
-				centerY->setText(String::NumberToString(-mapCL((cl_double)zoomSel->getPosition().y, 0, core->getYRes(), -(zoom[1]) / 2, (zoom[1]) / 2) + this->centerCL[1], 15), false);
-				zoomField->setText(String::NumberToString(mapCL((cl_double)zoomSel->getWidth(), 0, core->getXRes(), 0, zoom[0]), 15), false);
-				dragging = false;
+			if (dragging && timer > 0.1) {
+				centerX->setText(String::NumberToString(mapCL((cl_double) zoomSel->getPosition().x, 0, core->getXRes(), -(zoom[0]) / 2, (zoom[0]) / 2) + this->centerCL[0], 15), false);
+				centerY->setText(String::NumberToString(-mapCL((cl_double) zoomSel->getPosition().y, 0, core->getYRes(), -(zoom[1]) / 2, (zoom[1]) / 2) + this->centerCL[1], 15), false);
+				zoomField->setText(String::NumberToString(mapCL((cl_double) zoomSel->getWidth(), 0, core->getXRes(), 0, zoom[0]), 15), false);
 			}
+			dragging = false;
 		} else if (e->getEventCode() == InputEvent::EVENT_MOUSEDOWN){
 			if (!redraw->mouseOver && (!win->mouseOver || !win->visible) && !openOptions->mouseOver && clOptionsSet){
 				dragging = true;
 				startPoint = ie->getMousePosition();
+				timer = 0;
 			}
 		} else if (e->getEventCode() == InputEvent::EVENT_KEYDOWN){
 			if (!redrawWinButton->hasFocus) {
 				switch (ie->key) {
 				case PolyKEY::KEY_RETURN:
+					polynom = Polynom::readFromString(polynomInput->getText());
 					redrawIt();
 					break;
 				default:
@@ -599,8 +641,6 @@ void NewtonFraktalApp::handleEvent(Event* e){
 }
 
 void NewtonFraktalApp::redrawIt(){
-	polynom = Polynom::readFromString(polynomInput->getText());
-
 	derivation = new Polynom((*polynom));
 	derivation->differentiate();
 
@@ -639,4 +679,17 @@ void NewtonFraktalApp::redrawIt(){
 	centerSel->visible = false;
 	centerSel->setPosition(((core->getXRes() / 2) - center[0]), (core->getYRes() / 2) - center[1]);
 	zoomSel->visible = false;
+}
+
+void NewtonFraktalApp::generateRandom() {
+	int degree = (rand() % (MAX_DEGREE - 2)) + 3;
+	
+	polynom->clear();
+	for (int i = 0; i <= degree; i++) {
+		polynom->addCoefficient(complex<cl_double>(rand() % 20, rand() % 20));
+	}
+
+	polynomInput->setText(polynom->getString());
+
+	redrawIt();
 }

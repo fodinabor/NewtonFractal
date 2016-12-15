@@ -100,8 +100,7 @@ void NewtonFraktalCLGeneration::initCLAndRunNewton(cl_double* zoom, cl_int* res,
 	try {
 		std::string deviceName, vendor;
 
-		cl_context_properties properties[] =
-		{ CL_CONTEXT_PLATFORM, (cl_context_properties)(platforms[userChoiceP])(), 0 };
+		cl_context_properties properties[] = { CL_CONTEXT_PLATFORM, (cl_context_properties)(platforms[userChoiceP])(), 0 };
 		context = cl::Context(CL_DEVICE_TYPE_ALL, properties);
 
 		cl::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
@@ -202,6 +201,7 @@ void NewtonFraktalCLGeneration::calcZeros(){
 
 	} catch (cl::Error& err) {
 		Logger::log("[OpenCL] ERROR: %s (%d)\n", err.what(), err.err());
+		std::cerr << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(defaultDev);
 		this->err = err.err();
 	}
 }

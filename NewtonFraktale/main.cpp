@@ -30,7 +30,14 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 #ifdef _DEBUG
 	PolycodeView *view = new PolycodeView(hInstance, nCmdShow, L"NewtonFraktale", false, true);
 #else
-	PolycodeView *view = new PolycodeView(hInstance, nCmdShow, L"NewtonFraktale", false, false);
+	bool debug = false;
+	int nArgs;
+	LPWSTR *szArglist = CommandLineToArgvW(GetCommandLineW(), &nArgs);
+	for (int i = 1; i < nArgs; i++) {
+		if (String(szArglist[i]) == "-d" || String(szArglist[i]) == "/d")
+			debug = true;
+	}
+	PolycodeView *view = new PolycodeView(hInstance, nCmdShow, L"NewtonFraktale", false, debug);
 #endif
 	NewtonFraktalApp *app = new NewtonFraktalApp(view);
 

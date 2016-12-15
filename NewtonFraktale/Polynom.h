@@ -54,6 +54,9 @@ public:
 	complex<cl_double> getCoefficient(int idx);
 
 	String printPolynom();
+	String getString();
+
+	void clear();
 
 	static Polynom* readFromString(String polynom);
 

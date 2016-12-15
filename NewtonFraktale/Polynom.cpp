@@ -67,28 +67,55 @@ String Polynom::printPolynom() {
 		Logger::log("No Polynom to print");
 		return String();
 	}
-	Logger::log("The Polynom we're using:\n");
+	
+	String ret = getString();
+	Logger::log("The Polynom we're using:\n%s\n", ret.c_str());
+	//for (int i = this->coefficients.size() - 1; i >= 0; i--) {
+	//	if ((coefficients[i].real() != 0) || (coefficients[i].imag() != 0)) {
+	//		Logger::log("(%f+%fi)",coefficients[i].real(), coefficients[i].imag());
+	//		ret += "( "+String::NumberToString(coefficients[i].real(),0) + " + " + String::NumberToString(coefficients[i].imag(),0) + " i)";
+	//		if (i != 0) {
+	//			Logger::log("*"); ret += "*";
+	//		}
+	//		if (i >= 1) {
+	//			Logger::log("x"); ret += "x";
+	//		}
+	//		if (i >= 2) {
+	//			Logger::log("^%d", i); ret += "^ " + String::IntToString(i);
+	//		}
+	//		if (i != 0) {
+	//			Logger::log(" + "); ret += " + ";
+	//		}
+	//	}
+	//}
+	//Logger::log("\n");
+	return ret;
+}
+
+String Polynom::getString() {
 	String ret;
 	for (int i = this->coefficients.size() - 1; i >= 0; i--) {
 		if ((coefficients[i].real() != 0) || (coefficients[i].imag() != 0)) {
-			Logger::log("(%f+%fi)",coefficients[i].real(), coefficients[i].imag());
-			ret += "( "+String::NumberToString(coefficients[i].real(),0) + " + " + String::NumberToString(coefficients[i].imag(),0) + " i)";
+			ret += "( " + String::NumberToString(coefficients[i].real(), 0) + " + " + String::NumberToString(coefficients[i].imag(), 0) + " i)";
 			if (i != 0) {
-				Logger::log("*"); ret += "*";
+				ret += "*";
 			}
 			if (i >= 1) {
-				Logger::log("x"); ret += "x";
+				ret += "x";
 			}
 			if (i >= 2) {
-				Logger::log("^%d", i); ret += "^ " + String::IntToString(i);
+				ret += "^ " + String::IntToString(i);
 			}
 			if (i != 0) {
-				Logger::log(" + "); ret += " + ";
+				ret += " + ";
 			}
 		}
 	}
-	Logger::log("\n");
 	return ret;
+}
+
+void Polynom::clear() {
+	coefficients.clear();
 }
 
 Polynom* Polynom::readFromString(String polynom){
