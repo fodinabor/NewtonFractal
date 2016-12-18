@@ -57,13 +57,14 @@ int colors[] = {
 };
 
 NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
-	core = new POLYCODE_CORE(view, 1500, 1000, false, false, 0, 0, 20);
-	Services()->getRenderer()->setClearColor(0, 0, 0, 1);
+	core = new POLYCODE_CORE(view, 1000, 700, false, false, 0, 0, 20);
+	//Services()->getRenderer()->setClearColor(0, 0, 0, 1);
+	Services()->getRenderer()->setClearColor(Color::ColorWithHex(0x494949ff));
+	core->updateAndRender();
 	CoreServices::getInstance()->getResourceManager()->addArchive("default.pak");
 	CoreServices::getInstance()->getResourceManager()->addDirResource("default", false);
 	CoreServices::getInstance()->getResourceManager()->addArchive("UIThemes.pak");
 	CoreServices::getInstance()->getConfig()->loadConfig("Polycode", "theme.xml");
-	Services()->getRenderer()->setClearColor(Color::ColorWithHex(0x494949ff));
 
 	SceneLabel::defaultAnchor = Vector3(-1.0, -1.0, 0.0);
 	SceneLabel::defaultPositionAtBaseline = true;
@@ -141,8 +142,8 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 	derivation->printPolynom();
 
 	res = new cl_int[2];
-	res[0] = core->getXRes() * 2;
-	res[1] = core->getYRes() * 2;
+	res[0] = 2000;
+	res[1] = 2000;
 
 	ratio = (double)res[1] / (double)res[0];
 
@@ -153,8 +154,6 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 	centerCL = new cl_double[2];
 	centerCL[0] = 0;
 	centerCL[1] = 0;
-
-	fraktal = new Image(res[0], res[1]);
 
 	genCL = new NewtonFraktalCLGeneration();
 
@@ -207,7 +206,7 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 	zoomSel->setPosition(core->getXRes() / 2 - zoomSel->getWidth(), core->getYRes() / 2 - zoomSel->getHeight());
 	selScene->addEntity(zoomSel);
 
-	win = new UIWindow("Redraw Options", 400, 300);
+	win = new UIWindow("Redraw Options", 400, 400);
 	win->setPosition(core->getXRes() / 2 - win->getWidth() / 2, core->getYRes() / 2 - win->getHeight() / 2);
 	ui->addChild(win);
 	win->enabled = false;
@@ -253,14 +252,36 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 	zoomField->setText(String::NumberToString(zoom[0]));
 	zoomField->addEventListener(this, UIEvent::CHANGE_EVENT);
 
+	resLabel = new UILabel("Resolution:", 12);
+	win->addChild(resLabel);
+	resLabel->setPosition(12, 220);
+
+	resXInput = new UITextInput(false, 50, 15);
+	win->addFocusChild(resXInput);
+	resXInput->setText(String::IntToString(res[0]));
+	resXInput->setNumberOnly(true);
+	resXInput->setPosition(12, 235);
+	resXInput->addEventListener(this, UIEvent::CHANGE_EVENT);
+
+	resTimesLabel = new UILabel("x", 12);
+	win->addChild(resTimesLabel);
+	resTimesLabel->setPosition(75, 240);
+
+	resYInput = new UITextInput(false, 50, 15);
+	win->addFocusChild(resYInput);
+	resYInput->setText(String::IntToString(res[1]));
+	resYInput->setNumberOnly(true);
+	resYInput->setPosition(85, 235);
+	resYInput->addEventListener(this, UIEvent::CHANGE_EVENT);
+
 	contrastLabel = new UILabel("Kontrast:", 12);
 	win->addChild(contrastLabel);
-	contrastLabel->setPosition(12, 220);
+	contrastLabel->setPosition(12, 260);
 
-	contrastValue = 0.5;
+	contrastValue = 0.35;
 
 	contrastSlider = new UIHSlider(0.0, 1.0, 100);
-	contrastSlider->setPosition(12, 240);
+	contrastSlider->setPosition(12, 280);
 	contrastSlider->setContinuous(true);
 	contrastSlider->setSliderValue(contrastValue);
 	win->addFocusChild(contrastSlider);
@@ -268,7 +289,7 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 
 	contrastInput = new UITextInput(false, 270, 12);
 	contrastInput->setNumberOnly(true);
-	contrastInput->setPosition(120, 235);
+	contrastInput->setPosition(120, 275);
 	win->addFocusChild(contrastInput);
 	contrastInput->setText(String::NumberToString(contrastValue));
 	contrastInput->addEventListener(this, UIEvent::CHANGE_EVENT);
@@ -300,6 +321,8 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 	useCPU = true;
 	startPoint.x = 0.0;
 	startPoint.y = 0.0;
+
+	core->addEventListener(this, Core::EVENT_CORE_RESIZE);
 }
 
 NewtonFraktalApp::~NewtonFraktalApp() { }
@@ -371,22 +394,31 @@ void NewtonFraktalApp::drawFractal(){
 	const int yRes = res[1];
 	bool cl;
 
-	double *result = (double*)malloc(res[0] * res[1] * sizeof(double)), *iterations = (double*)malloc(res[0] * res[1] * sizeof(double));
-	int *typeRes = (int*)malloc(res[0] * res[1] * sizeof(int));
+	double *result = NULL;
+	int *typeRes = NULL, *iterations = NULL;
+
+	Image *fraktal = new Image(xRes, yRes);
 
 	if (genCL && genCL->err == CL_SUCCESS){
 		cl = true;
 	} else {
 		cl = false;
+
+		result = (double*) malloc(xRes * yRes * sizeof(double));
+		typeRes = (int*) malloc(xRes * yRes * sizeof(int));
+		iterations = (int*) malloc(xRes * yRes * sizeof(int));
+
 		findZeros();
 		runNewton(result, iterations, typeRes);
 	}
 
 	clock_t end = clock();
 
+	clock_t max_begin = clock();
+
 	double maxIters = 0;
-	for (int y = 0; y < fraktal->getHeight(); y++){
-		for (int x = 0; x < fraktal->getWidth(); x++){
+	for (int y = 0; y < yRes; y++){
+		for (int x = 0; x < xRes; x++){
 			if (cl){
 				if (genCL->typeRes[x + y * xRes] >= 0){
 					maxIters = MAX(maxIters, genCL->iterations[x + y * xRes]);
@@ -399,12 +431,18 @@ void NewtonFraktalApp::drawFractal(){
 		}
 	}
 
+	clock_t max_end = clock();
+
+	clock_t draw_begin = clock();
+
 	BezierCurve* colorCurve = new BezierCurve();
 	
-	colorCurve->setHeightCacheResolution(4096);
-
+	colorCurve->setHeightCacheResolution(8192);
+	
 	colorCurve->addControlPoint2dWithHandles(maxIters * -0.01, 1.5, maxIters * 0.0, 1.0, maxIters * 0.01, 0.5 * contrastValue);
 	colorCurve->addControlPoint2dWithHandles(maxIters * 0.375 * contrastValue, 0.01, maxIters * 1.0, 0.0, maxIters * 1.3, -0.01);
+
+	colorCurve->cacheHeightValues = true;
 
 	for (int y = 0; y < yRes; y++){
 		for (int x = 0; x < xRes; x++){
@@ -430,7 +468,7 @@ void NewtonFraktalApp::drawFractal(){
 				if (conDiv < 0.3)
 					conDiv = 0.3;
 
-				conDiv = colorCurve->getYValueAtX(conDiv);
+				conDiv = colorCurve->getYValueAtX(conDiv/maxIters);
 				col.setColorHSV(col.getHue(), col.getSaturation(), conDiv);
 				fraktal->setPixel(x, y, col);
 			} else {
@@ -442,10 +480,12 @@ void NewtonFraktalApp::drawFractal(){
 		}
 	}
 
+	clock_t draw_end = clock();
+
 	FILE* logFile;
 	fopen_s(&logFile, "polynoms.log", "a");
 	String timeS = String::IntToString(time(NULL)), polynomS = polynom->printPolynom();
-	fprintf(logFile, "Time: %s, Polynom: %s, Center: %.15Lf, %.15Lf, Area size: x: %.15Lf y: %.15Lf, Contrast: %f, MaxIters: %f, The computation took: %s seconds\n", timeS.c_str(), polynomS.c_str(), centerCL[0], centerCL[1], zoom[0], zoom[1], contrastValue, maxIters, String::NumberToString(double(end - begin) / CLOCKS_PER_SEC).c_str());
+	fprintf(logFile, "Time: %s, Polynom: %s, Center: %.15Lf, %.15Lf, Area size: x: %.15Lf y: %.15Lf, Contrast: %f, MaxIters: %f, The computation took: %s secs, searching the max: %s secs, drawing: %s secs\n", timeS.c_str(), polynomS.c_str(), centerCL[0], centerCL[1], zoom[0], zoom[1], contrastValue, maxIters, String::NumberToString(double(end - begin) / CLOCKS_PER_SEC).c_str(), String::NumberToString(double(max_end - max_begin) / CLOCKS_PER_SEC).c_str(), String::NumberToString(double(draw_end - draw_begin) / CLOCKS_PER_SEC).c_str());
 	fraktal->saveImage(timeS + ".png");
 	fclose(logFile);
 
@@ -457,12 +497,21 @@ void NewtonFraktalApp::drawFractal(){
 	sceneFraktal = new SceneImage(fraktal);
 	scene->addChild(sceneFraktal);
 
-	if (cl) {
+	delete fraktal;
 
+	if (cl) {
+		
 	} else {
 		free(result);
 		free(typeRes);
 		free(iterations);
+	}
+
+	double screenRatio = core->getYRes() / core->getXRes();
+	if (screenRatio > ratio) {
+		scene->getActiveCamera()->setOrthoSize(res[0], res[0] * screenRatio);
+	} else {
+		scene->getActiveCamera()->setOrthoSize(res[0] / screenRatio, res[1]);
 	}
 }
 
@@ -505,7 +554,7 @@ void NewtonFraktalApp::findZeros(){
 	}
 }
 
-void NewtonFraktalApp::runNewton(double *result, double *iterations, int *typeRes) {
+void NewtonFraktalApp::runNewton(double *result, int *iterations, int *typeRes) {
 	std::complex<double> z, zo, p, d;
 	const int xRes = res[0];
 	const int yRes = res[1];
@@ -608,8 +657,28 @@ void NewtonFraktalApp::handleEvent(Event* e){
 		contrastSlider->setSliderValue(contrastValue);
 	} else if (e->getDispatcher() == randomGenButton) {
 		generateRandom();
-	} else if ((e->getDispatcher() == centerX || e->getDispatcher() == centerY || e->getDispatcher()==zoomField)) {
+	} else if ((e->getDispatcher() == resXInput || e->getDispatcher() == resYInput)) {
+		if (resXInput->getText().isInteger() && resXInput->getText().toInteger() != 0) {
+			res[0] = resXInput->getText().toInteger();
+		}
+		if (resYInput->getText().isInteger() && resYInput->getText().toInteger() != 0) {
+			res[1] = resYInput->getText().toInteger();
+		}
+		ratio = (double) res[1] / (double) res[0];
+	} else if ((e->getDispatcher() == centerX || e->getDispatcher() == centerY || e->getDispatcher() == zoomField)) {
 		centerDirty = true;
+	} else if (e->getDispatcher() == core) {
+		switch (e->getEventCode()) {
+		case Core::EVENT_CORE_RESIZE:
+			double screenRatio = core->getYRes() / core->getXRes();
+			ratio = (double) res[1] / (double) res[0];
+			if (screenRatio > ratio) {
+				scene->getActiveCamera()->setOrthoSize(res[0], res[0] * screenRatio);
+			} else {
+				scene->getActiveCamera()->setOrthoSize(res[0] / screenRatio, res[1]);
+			}
+			break;
+		}
 	} else if (e->getDispatcher() == core->getInput()) {
 		InputEvent* ie = (InputEvent*)e;
 		if (e->getEventCode() == InputEvent::EVENT_MOUSEUP){
@@ -647,25 +716,27 @@ void NewtonFraktalApp::redrawIt(){
 	polynom->printPolynom();
 	derivation->printPolynom();
 
+	if (resXInput->getText().isInteger()) {
+		res[0] = resXInput->getText().toInteger();
+	}
+	if (resYInput->getText().isInteger()) {
+		res[1] = resYInput->getText().toInteger();
+	}
+
+	ratio = (double) res[1] / (double) res[0];
+
 	if (zoomField->getText().isNumber()){
 		zoom[0] = zoomField->getText().toNumber();
 		zoom[1] = zoomField->getText().toNumber() * ratio;
 	}
+
 	cl_double *center = new cl_double[2];
-//	center[0] = mapCL((cl_double)centerSel->getPosition().x, 0, core->getXRes(), -(res[0]) / 2, (res[0]) / 2) / zoom[0] + this->centerCL[0];
-//	center[1] = mapCL((cl_double)centerSel->getPosition().y, 0, core->getYRes(), -(res[1]) / 2, (res[1]) / 2) / zoom[1] + this->centerCL[1];
-
-	//center[0] = mapCL((cl_double)zoomSel->getPosition().x, 0, core->getXRes(), -(res[0]) / 2, (res[0]) / 2) / zoom[0] + this->centerCL[0];
-	//center[1] = mapCL((cl_double)zoomSel->getPosition().y, 0, core->getYRes(), -(res[1]) / 2, (res[1]) / 2) / zoom[1] + this->centerCL[1];
-
-	//if (centerDirty){
-		if (centerX->getText().isNumber()){
-			center[0] = centerX->getText().toNumber();
-		}
-		if (centerY->getText().isNumber()) {
-			center[1] = centerY->getText().toNumber();
-		}
-	//}
+	if (centerX->getText().isNumber()){
+		center[0] = centerX->getText().toNumber();
+	}
+	if (centerY->getText().isNumber()) {
+		center[1] = centerY->getText().toNumber();
+	}
 
 	begin = clock();
 	if (!useCPU) {

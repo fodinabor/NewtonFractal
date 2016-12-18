@@ -50,6 +50,7 @@ NewtonFraktalCLGeneration::NewtonFraktalCLGeneration(){
 	cl::Platform::get(&platforms);
 
 	if (platforms.size() == 0){
+		err = CL_PLATFORM_NOT_FOUND_KHR;
 		return;
 	}
 
@@ -57,12 +58,10 @@ NewtonFraktalCLGeneration::NewtonFraktalCLGeneration(){
 	for (int i = 0; i < platforms.size(); i++){
 		platforms[i].getInfo(CL_PLATFORM_NAME, &vendor);
 		platformStrs.push_back(vendor);
+		
 		cl::vector<cl::Device> pDevices;
-		//try {
-			platforms[i].getDevices(CL_DEVICE_TYPE_ALL, &pDevices);
-		//} catch (cl::Error& err){
-			//Logger::log("No Device of the specified type found for Platform %s.\n", vendor.c_str());
-		//}
+		platforms[i].getDevices(CL_DEVICE_TYPE_ALL, &pDevices);
+
 		std::vector<String> strs;
 		for (int j = 0; j < pDevices.size(); j++){
 			pDevices[j].getInfo<std::string>(CL_DEVICE_NAME, &deviceName);
@@ -70,6 +69,8 @@ NewtonFraktalCLGeneration::NewtonFraktalCLGeneration(){
 		}
 		deviceStrs.push_back(strs);
 	}
+
+	zeros = NULL;
 }
 
 void NewtonFraktalCLGeneration::initCLAndRunNewton(cl_double* zoom, cl_int* res, struct cl_complex* params, struct cl_complex* paramsD, cl_int* paramc, int userChoiceP, int userChoice){
@@ -98,7 +99,8 @@ void NewtonFraktalCLGeneration::initCLAndRunNewton(cl_double* zoom, cl_int* res,
 
 	err = CL_SUCCESS;
 	try {
-		std::string deviceName, vendor;
+		std::string deviceName, vendor, extensionsStl;
+		bool foundFP64 = false;
 
 		cl_context_properties properties[] = { CL_CONTEXT_PLATFORM, (cl_context_properties)(platforms[userChoiceP])(), 0 };
 		context = cl::Context(CL_DEVICE_TYPE_ALL, properties);
@@ -106,11 +108,29 @@ void NewtonFraktalCLGeneration::initCLAndRunNewton(cl_double* zoom, cl_int* res,
 		cl::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
 
 		if (devices.size() == 0){
+			err = CL_DEVICE_NOT_FOUND;
 			return;
 		}
 
 		devices[userChoice].getInfo<std::string>(CL_DEVICE_NAME, &deviceName);
 		devices[userChoice].getInfo<std::string>(CL_DEVICE_VENDOR, &vendor);
+		devices[userChoice].getInfo<std::string>(CL_DEVICE_EXTENSIONS, &extensionsStl);
+
+		String extensionString = extensionsStl;
+		std::vector<String> extensions = extensionString.split(" ");
+		for (int j = 0; j < extensions.size(); j++) {
+			if (extensions[j] == String("cl_khr_fp64")) {
+				foundFP64 = true;
+				break;
+			}
+		}
+		
+		if (!foundFP64) {
+			Logger::log("[OpenCL] ERROR: The Device: %s %s does not support the cl_khr_fp64 extension.\n", vendor.c_str(), deviceName.c_str());
+			err = CL_INVALID_DEVICE;
+			return;
+		}
+
 
 		Logger::log("[OpenCL] Using Device: %s %s\n", vendor.c_str(), deviceName.c_str());
 
@@ -119,10 +139,6 @@ void NewtonFraktalCLGeneration::initCLAndRunNewton(cl_double* zoom, cl_int* res,
 		cl::Program::Sources source(1, std::make_pair(buf, strlen(buf)));
 		program = cl::Program(context, source);
 		program.build(devices);
-
-		result = (cl_double*)malloc((res[0] * res[1] + 1) * sizeof(cl_double));
-		typeRes = (cl_int*)malloc((res[0] * res[1] + 1)* sizeof(cl_int));
-		iterations = (cl_int*)malloc((res[0] * res[1] + 1) * sizeof(cl_int));
 
 		runNewton(zoom, res);
 
@@ -150,6 +166,10 @@ void NewtonFraktalCLGeneration::calcZeros(){
 		cl::Buffer paramsDBuf(context, CL_MEM_READ_ONLY, paramc[1] * sizeof(struct cl_complex));
 		cl::Buffer paramcBuf(context, CL_MEM_READ_ONLY, 2 * sizeof(cl_int));
 		cl::Buffer outBuf(context, CL_MEM_WRITE_ONLY, (resZ[0] * resZ[1]) * sizeof(struct cl_complex));
+
+		if (zeros != NULL) {
+			free(zeros);
+		}
 
 		zeros = (struct cl_complex*)calloc(resZ[0] * resZ[1], sizeof(struct cl_complex));
 
@@ -219,6 +239,17 @@ void NewtonFraktalCLGeneration::runNewton(cl_double* zoom, cl_int* res, cl_doubl
 		center = this->center;
 	}
 
+	if (result != NULL)
+		free(result);
+	if (typeRes != NULL)
+		free(typeRes);
+	if (iterations != NULL)
+		free(iterations);
+
+	result = (cl_double*) malloc((res[0] * res[1]) * sizeof(cl_double));
+	typeRes = (cl_int*) malloc((res[0] * res[1]) * sizeof(cl_int));
+	iterations = (cl_int*) malloc((res[0] * res[1]) * sizeof(cl_int));
+
 	try{
 		queue = cl::CommandQueue(context, defaultDev, 0, &err);
 		
@@ -237,9 +268,9 @@ void NewtonFraktalCLGeneration::runNewton(cl_double* zoom, cl_int* res, cl_doubl
 		cl::Buffer zoomBuf(context, CL_MEM_READ_ONLY, 2 * sizeof(cl_double));
 		cl::Buffer centerBuf(context, CL_MEM_READ_ONLY, 2 * sizeof(cl_double));
 
-		memset(result, 0, (res[0] * res[1] + 1) * sizeof(cl_double));
-		memset(typeRes, 0, (res[0] * res[1] + 1)* sizeof(cl_int));
-		memset(iterations, 0, (res[0] * res[1] + 1)* sizeof(cl_int));
+		memset(result, 0, (res[0] * res[1]) * sizeof(cl_double));
+		memset(typeRes, 0, (res[0] * res[1]) * sizeof(cl_int));
+		memset(iterations, 0, (res[0] * res[1]) * sizeof(cl_int));
 		
 		queue.enqueueWriteBuffer(resBuf, CL_TRUE, 0, 2 * sizeof(cl_int), res);
 		queue.enqueueWriteBuffer(zoomBuf, CL_TRUE, 0, 2 * sizeof(cl_double), zoom);
@@ -267,6 +298,7 @@ void NewtonFraktalCLGeneration::runNewton(cl_double* zoom, cl_int* res, cl_doubl
 		kernel.setArg(8, outBuf);
 		kernel.setArg(9, typeOutBuf);
 		kernel.setArg(10, itOutBuf);
+
 		//for (int i = 0; i < 4; i++){
 		//offset[0] = (res[0] / 4) * i;
 			//for (int j = 0; j < 4; j++){

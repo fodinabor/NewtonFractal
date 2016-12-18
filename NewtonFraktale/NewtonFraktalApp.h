@@ -34,6 +34,7 @@ SOFTWARE.
 
 using namespace Polycode;
 #define RESOLUTION 0.0000000001
+#define SIZE 2
 
 cl_double mapCL(cl_double x, cl_double in_min, cl_double in_max, cl_double out_min, cl_double out_max);
 
@@ -48,7 +49,7 @@ public:
 	NewtonFraktalApp(PolycodeView *view);
 	~NewtonFraktalApp();
     
-	void runNewton(double *result, double *iterations, int *typeRes);
+	void runNewton(double *result, int *iterations, int *typeRes);
 	void findZeros();
 
 	void drawFractal();
@@ -73,7 +74,7 @@ private:
 
 	std::vector<std::complex<cl_double>> zeros;
 
-	Image* fraktal;
+	//Image* fraktal;
 	SceneImage *sceneFraktal;
 
 	UIWindow* win;
@@ -87,6 +88,10 @@ private:
 	UILabel* contrastLabel;
 	UIHSlider *contrastSlider;
 	UITextInput *contrastInput;
+	UILabel* resLabel;
+	UILabel* resTimesLabel;
+	UITextInput *resXInput;
+	UITextInput *resYInput;
 	UIButton *redrawWinButton;
 	UIButton *randomGenButton;
 	UIButton *openOptions;

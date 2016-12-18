@@ -123,8 +123,8 @@ copy "newton.cl" "$(TargetDir)"</Command>
       <AdditionalDependencies>Polycore_d.lib;PolycodeUI_d.lib;zlibd.lib;freetype_d.lib;liboggd.lib;libvorbisd.lib;libvorbisfiled.lib;OpenAL32d.lib;physfsd.lib;libpng15_staticd.lib;opengl32.lib;glu32.lib;winmm.lib;ws2_32.lib;OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>if not exist "$(TargetDir)default.pak" copy "Framework64\Core\Assets\default.pak" "$(TargetDir)"
-if not exist "$(TargetDir)UIThemes.pak" copy "UIThemes.pak" "$(TargetDir)"
+      <Command>if not exist "$(TargetDir)default.pak" copy "Framework\Core\Assets\default.pak" "$(TargetDir)"
+copy UIThemes.pak "$(TargetDir)"
 copy "newton.cl" "$(TargetDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -175,8 +175,8 @@ copy "newton.cl" "$(TargetDir)"</Command>
       <AdditionalDependencies>Polycore.lib;PolycodeUI.lib;zlib.lib;freetype.lib;libogg.lib;libvorbis.lib;libvorbisfile.lib;OpenAL32.lib;physfs.lib;libpng15_static.lib;opengl32.lib;glu32.lib;winmm.lib;ws2_32.lib;OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>if not exist "$(TargetDir)default.pak" copy "Framework64\Core\Assets\default.pak" "$(TargetDir)"
-if not exist "$(TargetDir)UIThemes.pak" copy "UIThemes.pak" "$(TargetDir)"
+      <Command>if not exist "$(TargetDir)default.pak" copy "Framework\Core\Assets\default.pak" "$(TargetDir)"
+copy UIThemes.pak "$(TargetDir)"
 copy "newton.cl" "$(TargetDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -194,6 +194,7 @@ copy "newton.cl" "$(TargetDir)"</Command>
   </ItemGroup>
   <ItemGroup>
     <None Include="newton.cl" />
+    <None Include="newton_float.cl" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="NewtonFraktale.rc" />

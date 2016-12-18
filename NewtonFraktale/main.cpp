@@ -28,7 +28,7 @@ SOFTWARE.
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 #ifdef _DEBUG
-	PolycodeView *view = new PolycodeView(hInstance, nCmdShow, L"NewtonFraktale", false, true);
+	PolycodeView *view = new PolycodeView(hInstance, nCmdShow, L"NewtonFraktale", true, true);
 #else
 	bool debug = false;
 	int nArgs;
@@ -37,7 +37,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 		if (String(szArglist[i]) == "-d" || String(szArglist[i]) == "/d")
 			debug = true;
 	}
-	PolycodeView *view = new PolycodeView(hInstance, nCmdShow, L"NewtonFraktale", false, debug);
+	PolycodeView *view = new PolycodeView(hInstance, nCmdShow, L"NewtonFraktale", true, debug);
 #endif
 	NewtonFraktalApp *app = new NewtonFraktalApp(view);
 
