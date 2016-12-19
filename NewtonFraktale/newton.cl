@@ -233,16 +233,18 @@ __kernel void newtonFraktal(__global const int* res, __global const double* zoom
 							__global double* result, __global int* resType, __global int* iterations){
 	const int x = get_global_id(0) + offset[0];
 	const int y = get_global_id(1) + offset[1];
-	
+
 	const int xRes = res[0];
 	const int yRes = res[1];
+
+	const int retPos = x + xRes * (y - offset[1]);
 	
 	const double a = (double)(zoom[0] * ((double)x - ((double)xRes / 2.0))) / xRes + center[0];
 	const double b = (double)(zoom[1] * (((double)yRes / 2.0) - (double)y)) / yRes + center[1];
 
 	struct complex z = createComplexFromKarthes(a, b);
 	struct complex f, d, zo;
-	resType[x + xRes * y] = -1;
+	resType[retPos] = -1;
 
 	bool found = false;
 	int i = 0;
@@ -258,18 +260,18 @@ __kernel void newtonFraktal(__global const int* res, __global const double* zoom
 		
 		for (int j = 0; j < paramc[0] - 1; j++){
 			if (compComplex(z, zeros[j], RESOLUTION)){
-				resType[x + xRes * y] = j;
-				result[x + xRes * y] = (log(RESOLUTION) - log(getComplexPolar(subComplex(zo, zeros[j])).r)) / (log(getComplexPolar(subComplex(z, zeros[j])).r) - log(getComplexPolar(subComplex(zo, zeros[j])).r));
+				resType[retPos] = j;
+				result[retPos] = (log(RESOLUTION) - log(getComplexPolar(subComplex(zo, zeros[j])).r)) / (log(getComplexPolar(subComplex(z, zeros[j])).r) - log(getComplexPolar(subComplex(zo, zeros[j])).r));
 				found = true;
 				break;
 			}
 		}
 
 		if (compComplex(z, zo, RESOLUTION/100) && !found){
-			resType[x + xRes * y] = -1;
+			resType[retPos] = -1;
 			break;
 		}
 	}
 
-	iterations[x + xRes * y] = i;
+	iterations[retPos] = i;
 }

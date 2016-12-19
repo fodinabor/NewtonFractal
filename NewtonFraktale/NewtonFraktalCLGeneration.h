@@ -36,6 +36,8 @@ public:
 	void calcZeros();
 	void runNewton(cl_double* zoom, cl_int* res, cl_double* center = NULL, struct cl_complex* params = NULL, struct cl_complex* paramsD = NULL, cl_int* paramc = NULL);
 
+	void free_memory();
+
 	cl_double* result;
 	cl_int* iterations;
 	cl_int* typeRes;
@@ -60,5 +62,9 @@ protected:
 	cl::CommandQueue queue;
 
 	cl::vector<cl::Platform> platforms;
+
+	cl_ulong memSize;
+	cl_ulong maxPixelPerCall;
 };
 
+void __stdcall freed_memory(cl_mem id, void* data);

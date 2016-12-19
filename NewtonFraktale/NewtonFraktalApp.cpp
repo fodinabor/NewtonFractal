@@ -30,7 +30,7 @@ SOFTWARE.
 #define pi 3.14159265359
 extern bool compComplex(const std::complex<cl_double> z, const std::complex<cl_double> c, double comp);
 
-int colors[] = {
+std::vector<int> colorsHex = {
 	0x0000FF,
 	0x00FF00,
 	0xFF0000,
@@ -322,6 +322,12 @@ NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
 	startPoint.x = 0.0;
 	startPoint.y = 0.0;
 
+	for (int i = 0; i < colorsHex.size(); i++) {
+		Color col;
+		col.setColorHexRGB(colorsHex[i]);
+		colors.push_back(col);
+	}
+
 	core->addEventListener(this, Core::EVENT_CORE_RESIZE);
 }
 
@@ -397,12 +403,12 @@ void NewtonFraktalApp::drawFractal(){
 	double *result = NULL;
 	int *typeRes = NULL, *iterations = NULL;
 
-	Image *fraktal = new Image(xRes, yRes);
-
 	if (genCL && genCL->err == CL_SUCCESS){
 		cl = true;
 	} else {
 		cl = false;
+
+		genCL->free_memory();
 
 		result = (double*) malloc(xRes * yRes * sizeof(double));
 		typeRes = (int*) malloc(xRes * yRes * sizeof(int));
@@ -435,14 +441,14 @@ void NewtonFraktalApp::drawFractal(){
 
 	clock_t draw_begin = clock();
 
+	Image *fraktal = new Image(xRes, yRes);
+
 	BezierCurve* colorCurve = new BezierCurve();
-	
+	colorCurve->cacheHeightValues = true;
 	colorCurve->setHeightCacheResolution(8192);
-	
+
 	colorCurve->addControlPoint2dWithHandles(maxIters * -0.01, 1.5, maxIters * 0.0, 1.0, maxIters * 0.01, 0.5 * contrastValue);
 	colorCurve->addControlPoint2dWithHandles(maxIters * 0.375 * contrastValue, 0.01, maxIters * 1.0, 0.0, maxIters * 1.3, -0.01);
-
-	colorCurve->cacheHeightValues = true;
 
 	for (int y = 0; y < yRes; y++){
 		for (int x = 0; x < xRes; x++){
@@ -459,8 +465,8 @@ void NewtonFraktalApp::drawFractal(){
 			}
 			
 			if (type >= 0){
-				Color col;
-				col.setColorHexRGB(colors[type]);
+				Color col = colors[type];
+				//col.setColorHexRGB(colors[type]);
 				conDiv = it + conDiv;
 
 				if (conDiv > maxIters)
@@ -485,27 +491,22 @@ void NewtonFraktalApp::drawFractal(){
 	FILE* logFile;
 	fopen_s(&logFile, "polynoms.log", "a");
 	String timeS = String::IntToString(time(NULL)), polynomS = polynom->printPolynom();
-	fprintf(logFile, "Time: %s, Polynom: %s, Center: %.15Lf, %.15Lf, Area size: x: %.15Lf y: %.15Lf, Contrast: %f, MaxIters: %f, The computation took: %s secs, searching the max: %s secs, drawing: %s secs\n", timeS.c_str(), polynomS.c_str(), centerCL[0], centerCL[1], zoom[0], zoom[1], contrastValue, maxIters, String::NumberToString(double(end - begin) / CLOCKS_PER_SEC).c_str(), String::NumberToString(double(max_end - max_begin) / CLOCKS_PER_SEC).c_str(), String::NumberToString(double(draw_end - draw_begin) / CLOCKS_PER_SEC).c_str());
+	fprintf(logFile, "Time: %s, Polynom: %s, Center: %.15Lf, %.15Lf, Area size: x: %.15Lf y: %.15Lf, Resolution: %dx%d, Contrast: %f, MaxIters: %f, The computation took: %s secs, searching the max: %s secs, drawing: %s secs\n", timeS.c_str(), polynomS.c_str(), centerCL[0], centerCL[1], zoom[0], zoom[1], res[0], res[1], contrastValue, maxIters, String::NumberToString(double(end - begin) / CLOCKS_PER_SEC).c_str(), String::NumberToString(double(max_end - max_begin) / CLOCKS_PER_SEC).c_str(), String::NumberToString(double(draw_end - draw_begin) / CLOCKS_PER_SEC).c_str());
 	fraktal->saveImage(timeS + ".png");
 	fclose(logFile);
 
-	if (sceneFraktal) {
-		Services()->getRenderer()->destroyTexture(sceneFraktal->getTexture());
-		scene->removeEntity(sceneFraktal);
-		delete sceneFraktal;
-	}
 	sceneFraktal = new SceneImage(fraktal);
 	scene->addChild(sceneFraktal);
 
 	delete fraktal;
 
-	if (cl) {
-		
-	} else {
+	if (!cl){
 		free(result);
 		free(typeRes);
 		free(iterations);
 	}
+
+	genCL->free_memory();
 
 	double screenRatio = core->getYRes() / core->getXRes();
 	if (screenRatio > ratio) {
@@ -736,6 +737,12 @@ void NewtonFraktalApp::redrawIt(){
 	}
 	if (centerY->getText().isNumber()) {
 		center[1] = centerY->getText().toNumber();
+	}
+
+	if (sceneFraktal) {
+		Services()->getRenderer()->destroyTexture(sceneFraktal->getTexture());
+		scene->removeEntity(sceneFraktal);
+		delete sceneFraktal;
 	}
 
 	begin = clock();

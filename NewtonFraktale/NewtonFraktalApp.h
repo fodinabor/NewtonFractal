@@ -120,4 +120,6 @@ private:
 	clock_t begin, end;
 
 	Number timer;
+
+	std::vector<Color> colors;
 };
