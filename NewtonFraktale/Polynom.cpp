@@ -25,7 +25,8 @@ SOFTWARE.
 #include "PolyLogger.h"
 #include <cstring>
 
-extern struct cl_complex createComplexFromKarthes(cl_double real, cl_double imag);
+extern struct cl_double_complex createComplexFromKarthes(cl_double real, cl_double imag);
+extern struct cl_float_complex createComplexFromKarthes(cl_float real, cl_float imag);
 
 Polynom::Polynom(){}
 
@@ -146,10 +147,18 @@ Polynom* Polynom::readFromString(String polynom){
 	return retPoly;
 }
 
-struct cl_complex* Polynom::getCLCoefficients(){
-	struct cl_complex* coefficientsCL = (struct cl_complex*)malloc(coefficients.size()*sizeof(struct cl_complex) * 2);
+struct cl_double_complex* Polynom::getCLCoefficients(){
+	struct cl_double_complex* coefficientsCL = (struct cl_double_complex*)malloc(coefficients.size()*sizeof(struct cl_double_complex) * 2);
 	for (int i = 0; i < coefficients.size(); i++){
 		coefficientsCL[i] = createComplexFromKarthes(coefficients[i].real(),coefficients[i].imag());
+	}
+	return coefficientsCL;
+}
+
+struct cl_float_complex* Polynom::getFloatCLCoefficients() {
+	struct cl_float_complex* coefficientsCL = (struct cl_float_complex*)malloc(coefficients.size() * sizeof(struct cl_float_complex) * 2);
+	for (int i = 0; i < coefficients.size(); i++) {
+		coefficientsCL[i] = createComplexFromKarthes((cl_float) coefficients[i].real(), (cl_float) coefficients[i].imag());
 	}
 	return coefficientsCL;
 }

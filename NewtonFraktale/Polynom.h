@@ -30,11 +30,21 @@ SOFTWARE.
 using namespace Polycode;
 using namespace std;
 
-struct cl_complex {
+struct cl_double_complex {
 	cl_double im;
 	cl_double re;
 	cl_double r;
 	cl_double phi;
+
+	cl_char isPolar;
+	cl_char isKarthes;
+};
+
+struct cl_float_complex {
+	cl_float im;
+	cl_float re;
+	cl_float r;
+	cl_float phi;
 
 	cl_char isPolar;
 	cl_char isKarthes;
@@ -60,7 +70,8 @@ public:
 
 	static Polynom* readFromString(String polynom);
 
-	struct cl_complex* getCLCoefficients();
+	struct cl_double_complex* getCLCoefficients();
+	struct cl_float_complex* getFloatCLCoefficients();
 private:
 	std::vector<complex<cl_double>> coefficients;
 };

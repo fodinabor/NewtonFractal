@@ -408,7 +408,7 @@ void NewtonFraktalApp::drawFractal(){
 	} else {
 		cl = false;
 
-		genCL->free_memory();
+		genCL->freeMemory();
 
 		result = (double*) malloc(xRes * yRes * sizeof(double));
 		typeRes = (int*) malloc(xRes * yRes * sizeof(int));
@@ -454,8 +454,11 @@ void NewtonFraktalApp::drawFractal(){
 		for (int x = 0; x < xRes; x++){
 			int type;
 			double conDiv, it;
-			if (cl){
-				conDiv = genCL->result[x + y * xRes];
+			if (cl) {
+				if (usingDouble())
+					conDiv = genCL->result_double[x + y * xRes];
+				else
+					conDiv = genCL->result_float[x + y * xRes];
 				type = genCL->typeRes[x + y * xRes];
 				it = genCL->iterations[x + y * xRes];
 			} else {
@@ -506,7 +509,7 @@ void NewtonFraktalApp::drawFractal(){
 		free(iterations);
 	}
 
-	genCL->free_memory();
+	genCL->freeMemory();
 
 	double screenRatio = core->getYRes() / core->getXRes();
 	if (screenRatio > ratio) {
@@ -748,7 +751,19 @@ void NewtonFraktalApp::redrawIt(){
 	begin = clock();
 	if (!useCPU) {
 		cl_int paramc[] = { polynom->getNumCoefficients(), derivation->getNumCoefficients() };
-		genCL->runNewton(zoom, res, center, polynom->getCLCoefficients(), derivation->getCLCoefficients(), paramc);
+		if(usingDouble())
+			genCL->runNewton(zoom, res, center, polynom->getCLCoefficients(), derivation->getCLCoefficients(), paramc);
+		else {
+			cl_float* zoom_float = new cl_float[2];
+			zoom_float[0] = (cl_float) zoom[0];
+			zoom_float[1] = (cl_float) zoom[1];
+
+			cl_float* center_float = new cl_float[2];
+			center_float[0] = (cl_float) center[0];
+			center_float[1] = (cl_float) center[1];
+
+			genCL->runNewton(zoom_float, res, center_float, polynom->getFloatCLCoefficients(), derivation->getFloatCLCoefficients(), paramc);
+		}
 	}
 
 	this->centerCL = center;
@@ -760,7 +775,11 @@ void NewtonFraktalApp::redrawIt(){
 }
 
 void NewtonFraktalApp::generateRandom() {
-	int degree = (rand() % (MAX_DEGREE - 2)) + 3;
+	int degree;
+	if (usingDouble())
+		degree = (rand() % (MAX_DEGREE - 2)) + 3;
+	else
+		degree = (rand() % (MAX_DEGREE_FLOAT - 2)) + 3;
 	
 	polynom->clear();
 	for (int i = 0; i <= degree; i++) {

@@ -23,6 +23,7 @@ SOFTWARE.
 */
 #pragma once
 #define MAX_DEGREE 23
+#define MAX_DEGREE_FLOAT 8
 
 #include "PolycodeView.h"
 #include "Polycode.h"

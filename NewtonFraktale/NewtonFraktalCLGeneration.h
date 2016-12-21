@@ -32,27 +32,24 @@ public:
 	NewtonFraktalCLGeneration();
 	~NewtonFraktalCLGeneration();
 	
-	void initCLAndRunNewton(cl_double* zoom, cl_int* res, struct cl_complex* params, struct cl_complex* paramsD, cl_int* paramc, int userChoiceP, int userChoice);
-	void calcZeros();
-	void runNewton(cl_double* zoom, cl_int* res, cl_double* center = NULL, struct cl_complex* params = NULL, struct cl_complex* paramsD = NULL, cl_int* paramc = NULL);
+	void initCLAndRunNewton(const cl_double* zoom, const cl_int* res, const struct cl_double_complex* params, const struct cl_double_complex* paramsD, const cl_int* paramc, int userChoiceP, int userChoice);
+	void calcZeros(const struct cl_double_complex* params, const struct cl_double_complex* paramsD, const cl_int* paramc, struct cl_double_complex* zerosOut);
+	void calcZeros(const struct cl_float_complex* params, const struct cl_float_complex* paramsD, const cl_int* paramc, struct cl_float_complex* zerosOut);
+	void runNewton(const cl_double* zoom, const cl_int* res, const cl_double* center, const struct cl_double_complex* params, const struct cl_double_complex* paramsD, const cl_int* paramc);
+	void runNewton(const cl_float* zoom, const cl_int* res, const cl_float* center, const struct cl_float_complex* params, const struct cl_float_complex* paramsD, const cl_int* paramc);
 
-	void free_memory();
+	void freeMemory();
 
-	cl_double* result;
+	cl_double* result_double;
+	cl_float* result_float;
 	cl_int* iterations;
 	cl_int* typeRes;
 	cl_int err;
 
-	//cl_int zerosc;
-	struct cl_complex* zeros;
-	cl_double* center;
-
-	cl_int* paramc;
-	struct cl_complex* params;
-	struct cl_complex* paramsD;
-
 	std::vector<std::vector<Polycode::String>>deviceStrs;
 	std::vector<Polycode::String> platformStrs;
+
+	static bool useDouble;
 
 protected:
 	cl::Device defaultDev;
@@ -65,6 +62,10 @@ protected:
 
 	cl_ulong memSize;
 	cl_ulong maxPixelPerCall;
+
+	void convertDoubleArrayToFloat(const cl_double* in, cl_float* out, int size);
+	void convertDoubleComplexArrayToFloat(const cl_double_complex* in, cl_float_complex* out, int size);
 };
 
 void __stdcall freed_memory(cl_mem id, void* data);
+bool usingDouble();

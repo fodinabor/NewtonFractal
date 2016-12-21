@@ -103,7 +103,8 @@
     <PostBuildEvent>
       <Command>if not exist "$(TargetDir)default.pak" copy "Framework\Core\Assets\default.pak" "$(TargetDir)"
 copy UIThemes.pak "$(TargetDir)"
-copy "newton.cl" "$(TargetDir)"</Command>
+copy "newton_float.cl" "$(TargetDir)"
+copy "newton_double.cl" "$(TargetDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -125,7 +126,8 @@ copy "newton.cl" "$(TargetDir)"</Command>
     <PostBuildEvent>
       <Command>if not exist "$(TargetDir)default.pak" copy "Framework\Core\Assets\default.pak" "$(TargetDir)"
 copy UIThemes.pak "$(TargetDir)"
-copy "newton.cl" "$(TargetDir)"</Command>
+copy "newton_float.cl" "$(TargetDir)"
+copy "newton_double.cl" "$(TargetDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -151,7 +153,8 @@ copy "newton.cl" "$(TargetDir)"</Command>
     <PostBuildEvent>
       <Command>if not exist "$(TargetDir)default.pak" copy "Framework\Core\Assets\default.pak" "$(TargetDir)"
 copy UIThemes.pak "$(TargetDir)"
-copy "newton.cl" "$(TargetDir)"</Command>
+copy "newton_float.cl" "$(TargetDir)"
+copy "newton_double.cl" "$(TargetDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -177,7 +180,8 @@ copy "newton.cl" "$(TargetDir)"</Command>
     <PostBuildEvent>
       <Command>if not exist "$(TargetDir)default.pak" copy "Framework\Core\Assets\default.pak" "$(TargetDir)"
 copy UIThemes.pak "$(TargetDir)"
-copy "newton.cl" "$(TargetDir)"</Command>
+copy "newton_float.cl" "$(TargetDir)"
+copy "newton_double.cl" "$(TargetDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -193,7 +197,7 @@ copy "newton.cl" "$(TargetDir)"</Command>
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="newton.cl" />
+    <None Include="newton_double.cl" />
     <None Include="newton_float.cl" />
   </ItemGroup>
   <ItemGroup>
