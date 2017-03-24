@@ -21,36 +21,48 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-#include <PolycodeView.h>
+#include "NewtonFraktalView.h"
 #include "windows.h"
+#include "resource.h"
 #include "NewtonFraktalApp.h"
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-#ifdef _DEBUG
-	PolycodeView *view = new PolycodeView(hInstance, nCmdShow, L"NewtonFraktale", true, true);
-#else
-	bool debug = false;
+	bool debug = false, createWindow = true;
 	int nArgs;
 	LPWSTR *szArglist = CommandLineToArgvW(GetCommandLineW(), &nArgs);
 	for (int i = 1; i < nArgs; i++) {
-		if (String(szArglist[i]) == "-d" || String(szArglist[i]) == "/d")
+		String arg = String(szArglist[i]);
+		if (arg == "-d" || arg == "/d")
 			debug = true;
+		else if (arg == "-q" || arg == "/q")
+			createWindow = false;
 	}
-	PolycodeView *view = new PolycodeView(hInstance, nCmdShow, L"NewtonFraktale", true, debug);
+
+#ifdef _DEBUG
+	debug = true;
 #endif
-	NewtonFraktalApp *app = new NewtonFraktalApp(view);
+	if (createWindow) {
+		POINT minSize;
+		minSize.x = 500;
+		minSize.y = 500;
 
-	MSG Msg;
-	do {
-		while (PeekMessage(&Msg, NULL, 0, 0, PM_REMOVE)) {
-			TranslateMessage(&Msg);
-			DispatchMessage(&Msg);
-		}
-	} while (app->Update());
+		NewtonFraktalView *view = new NewtonFraktalView(hInstance, nCmdShow, L"NewtonFraktale", minSize, true, debug);
+		NewtonFraktalApp *app = new NewtonFraktalApp(view);
 
-	delete app;
-	delete view;
+		MSG Msg;
+		do {
+			while (PeekMessage(&Msg, NULL, 0, 0, PM_REMOVE)) {
+				TranslateMessage(&Msg);
+				DispatchMessage(&Msg);
+			}
+		} while (app->Update());
 
-	return Msg.wParam;
+		delete app;
+		delete view;
+
+		return Msg.wParam;
+	} else {
+		return 0;
+	}
 }

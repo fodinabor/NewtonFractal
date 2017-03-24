@@ -188,11 +188,13 @@ copy "newton_double.cl" "$(TargetDir)"</Command>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="NewtonFraktalApp.cpp" />
     <ClCompile Include="NewtonFraktalCLGeneration.cpp" />
+    <ClCompile Include="NewtonFraktalView.cpp" />
     <ClCompile Include="Polynom.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="NewtonFraktalApp.h" />
     <ClInclude Include="NewtonFraktalCLGeneration.h" />
+    <ClInclude Include="NewtonFraktalView.h" />
     <ClInclude Include="Polynom.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>

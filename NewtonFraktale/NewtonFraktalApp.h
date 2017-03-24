@@ -25,7 +25,7 @@ SOFTWARE.
 #define MAX_DEGREE 23
 #define MAX_DEGREE_FLOAT 8
 
-#include "PolycodeView.h"
+#include "NewtonFraktalView.h"
 #include "Polycode.h"
 #include <PolycodeUI.h>
 #include "Polynom.h"
@@ -47,7 +47,7 @@ T clamp(const T &val, const T &min, const T &max)
 
 class NewtonFraktalApp : public EventHandler {
 public:
-	NewtonFraktalApp(PolycodeView *view);
+	NewtonFraktalApp(NewtonFraktalView *view);
 	~NewtonFraktalApp();
     
 	void runNewton(double *result, int *iterations, int *typeRes);

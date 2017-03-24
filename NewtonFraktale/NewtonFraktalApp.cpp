@@ -56,7 +56,7 @@ std::vector<int> colorsHex = {
 	0x0055ff
 };
 
-NewtonFraktalApp::NewtonFraktalApp(PolycodeView *view) {
+NewtonFraktalApp::NewtonFraktalApp(NewtonFraktalView *view) {
 	core = new POLYCODE_CORE(view, 1000, 700, false, false, 0, 0, 20);
 	//Services()->getRenderer()->setClearColor(0, 0, 0, 1);
 	Services()->getRenderer()->setClearColor(Color::ColorWithHex(0x494949ff));
@@ -342,7 +342,7 @@ bool NewtonFraktalApp::Update() {
 		if (dragging) {
 			size = max(abs(Services()->getInput()->mousePosition.x - startPoint.x), abs(Services()->getInput()->mousePosition.y - startPoint.y));
 		} else if (centerDirty) {
-			size = mapCL((cl_double) zoomField->getText().toNumber(), 0, zoom[0], 0, core->getXRes());
+			size = mapCL((cl_double) zoomField->getText().toNumber(), 0, zoom[0], 0, res[0] / scene->getActiveCamera()->getOrthoSizeX() * core->getXRes());
 		}
 
 		if (size * (size * ratio) * 3 < MAXINT && size > RESOLUTION / 100) {
@@ -652,6 +652,7 @@ void NewtonFraktalApp::handleEvent(Event* e){
 		polynom = Polynom::readFromString(polynomInput->getText());
 		redrawIt();
 	} else if (e->getDispatcher() == openOptions) {
+		win->setPosition(core->getXRes() / 2 - win->getWidth() / 2, core->getYRes() / 2 - win->getHeight() / 2);
 		win->showWindow();
 	} else if (e->getDispatcher() == contrastSlider) {
 		contrastValue = contrastSlider->getSliderValue();
@@ -681,6 +682,9 @@ void NewtonFraktalApp::handleEvent(Event* e){
 			} else {
 				scene->getActiveCamera()->setOrthoSize(res[0] / screenRatio, res[1]);
 			}
+			selScene->getActiveCamera()->setOrthoSize(core->getXRes(), core->getYRes());
+			ui->getActiveCamera()->setOrthoSize(core->getXRes(), core->getYRes());
+			centerDirty = true;
 			break;
 		}
 	} else if (e->getDispatcher() == core->getInput()) {
@@ -689,7 +693,7 @@ void NewtonFraktalApp::handleEvent(Event* e){
 			if (dragging && timer > 0.1) {
 				centerX->setText(String::NumberToString(mapCL((cl_double) zoomSel->getPosition().x, 0, core->getXRes(), -(zoom[0]) / 2, (zoom[0]) / 2) + this->centerCL[0], 15), false);
 				centerY->setText(String::NumberToString(-mapCL((cl_double) zoomSel->getPosition().y, 0, core->getYRes(), -(zoom[1]) / 2, (zoom[1]) / 2) + this->centerCL[1], 15), false);
-				zoomField->setText(String::NumberToString(mapCL((cl_double) zoomSel->getWidth(), 0, core->getXRes(), 0, zoom[0]), 15), false);
+				zoomField->setText(String::NumberToString(mapCL((cl_double) zoomSel->getWidth(), 0, res[0] / scene->getActiveCamera()->getOrthoSizeX() * core->getXRes(), 0, zoom[0]), 15), false);
 			}
 			dragging = false;
 		} else if (e->getEventCode() == InputEvent::EVENT_MOUSEDOWN){
