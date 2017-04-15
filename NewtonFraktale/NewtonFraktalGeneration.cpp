@@ -1,4 +1,4 @@
-/*
+﻿/*
 The MIT License (MIT)
 
 Copyright (c) 2017 By Joachim Meyer
@@ -24,6 +24,7 @@ SOFTWARE.
 
 #include "NewtonFraktalGeneration.h"
 #include "Polynom.h"
+#include <windows.h>
 #include <ctime>
 
 const vector<int> NewtonFraktalGeneration::colorsHex = {
@@ -114,8 +115,8 @@ bool NewtonFraktalGenerator::compComplex(const std::complex<double> z, const std
 }
 
 NewtonFraktalGeneration::NewtonFraktalGeneration() {
-
-	registerGenerator(new NewtonFraktalGenerator, GENERATION_MODE_CPU);
+	defaultGenerationMode = GENERATION_MODE_CPU;
+	defaultGenerator = registerGenerator(new NewtonFraktalGenerator, GENERATION_MODE_CPU);
 
 	for (int i = 0; i < colorsHex.size(); i++) {
 		Color col;
@@ -126,18 +127,69 @@ NewtonFraktalGeneration::NewtonFraktalGeneration() {
 
 NewtonFraktalGeneration::~NewtonFraktalGeneration() {}
 
-void NewtonFraktalGeneration::generate(NewtonFraktal *fraktal, int mode) {
+void NewtonFraktalGeneration::generate(NewtonFraktal *fraktal, int mode, bool save) {
 	fraktal->allocGenRes();
 	getGeneratorForMode(mode)->runNewton(fraktal);
 	fraktal->draw();
 
-	String timeS = String::IntToString(time(NULL));
-	fraktal->savePNG(timeS + ".png");
+	if (save) {
+		String timeS = String::IntToString(time(NULL));
+		fraktal->savePNG(timeS + ".png");
+	}
 }
 
-void NewtonFraktalGeneration::registerGenerator(NewtonFraktalGenerator * newGen, int generatorType) {
+void NewtonFraktalGeneration::generate(NewtonFraktal * fraktal, NewtonFraktalGenerator * generator, bool save) {
+	fraktal->allocGenRes();
+	generator->runNewton(fraktal);
+	fraktal->draw();
+
+	if (save) {
+		String timeS = String::IntToString(time(NULL));
+		fraktal->savePNG(timeS + ".png");
+	}
+}
+
+void NewtonFraktalGeneration::generateZoom(BezierCurve * areaCurve, BezierCurve * centerCurve, int framerate, int duration, int * resolution, Polynom * polynom, double contrast) {
+	double area, ratio = (double)resolution[1] / (double)resolution[0];
+	int frameCount = duration * framerate;
+	String setName = String::IntToString(time(NULL)), encoderCall = "cd " + setName + " && " + getExePath() + "\\mencoder \"mf://*.png\" -mf w=" + String::IntToString(resolution[0]) + ":h=" + String::IntToString(resolution[0]) + ":fps=" + String::IntToString(framerate) + " -o " + setName + ".avi -ovc lavc -lavcopts vcodec=mpeg4:mbd=2:trell";
+
+	CreateDirectory(setName.getWDataWithEncoding(String::ENCODING_UTF8), NULL);
+
+	areaCurve->cacheHeightValues = true;
+	areaCurve->setHeightCacheResolution(framerate * duration);
+
+	centerCurve->cacheHeightValues = true;
+	centerCurve->setHeightCacheResolution(framerate * duration);
+
+	for (long i = 0; i < frameCount; i++) {
+		NewtonFraktal *fraktal = new NewtonFraktal(resolution[0], resolution[1]);
+		area = areaCurve->getYValueAtX(i / (double)frameCount);
+		fraktal->setArea(area, area * ratio);
+		fraktal->setCenter(centerCurve->getYValueAtX((double)i / (double) framerate), centerCurve->getTValueAtX((double)i / (double)framerate));
+		fraktal->setContrast(contrast);
+		fraktal->setPolynom(polynom);
+
+		generate(fraktal, defaultGenerator, false);
+		fraktal->savePNG(setName + "/" + String::IntToString(time(NULL)) + ".png");
+
+		delete fraktal;
+	}
+
+	int ret = system(encoderCall.c_str());
+	Logger::log("Encoder exit code: %i\n", ret);
+	system((String("cd ") + getExePath()).c_str());
+}
+
+NewtonFraktalGenerator* NewtonFraktalGeneration::registerGenerator(NewtonFraktalGenerator * newGen, int generatorType) {
 	newGen->generatorType = generatorType;
 	generators.push_back(newGen);
+	return newGen;
+}
+
+void NewtonFraktalGeneration::setDefaultGenerationMode(int newDef) {
+	defaultGenerationMode = newDef;
+	defaultGenerator = getGeneratorForMode(defaultGenerationMode);
 }
 
 NewtonFraktalGenerator * NewtonFraktalGeneration::getGeneratorForMode(int mode) {
@@ -152,4 +204,11 @@ NewtonFraktalGenerator * NewtonFraktalGeneration::getGeneratorForMode(int mode) 
 	generators.push_back(new NewtonFraktalGenerator());
 	generators[generators.size() - 1]->generatorType = GENERATION_MODE_CPU;
 	return generators[generators.size() - 1];
+}
+
+String NewtonFraktalGeneration::getExePath() {
+	wchar_t buffer[MAX_PATH];
+	GetModuleFileName(NULL, buffer, MAX_PATH);
+	size_t pos = String(buffer).find_last_of("\\/");
+	return String(buffer).substr(0, pos);
 }

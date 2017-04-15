@@ -108,7 +108,8 @@
       <Command>if not exist "$(TargetDir)default.pak" copy "Framework\Core\Assets\default.pak" "$(TargetDir)"
 copy UIThemes.pak "$(TargetDir)"
 copy "newton_float.cl" "$(TargetDir)"
-copy "newton_double.cl" "$(TargetDir)"</Command>
+copy "newton_double.cl" "$(TargetDir)"
+if not exist "$(TargetDir)mencoder.exe" copy "$(ProjectDir)mencoder.exe" "$(TargetDir)"</Command>
     </PostBuildEvent>
     <MASM>
       <PreprocessorDefinitions>ASMX86_32</PreprocessorDefinitions>
@@ -134,7 +135,8 @@ copy "newton_double.cl" "$(TargetDir)"</Command>
       <Command>if not exist "$(TargetDir)default.pak" copy "Framework\Core\Assets\default.pak" "$(TargetDir)"
 copy UIThemes.pak "$(TargetDir)"
 copy "newton_float.cl" "$(TargetDir)"
-copy "newton_double.cl" "$(TargetDir)"</Command>
+copy "newton_double.cl" "$(TargetDir)"
+if not exist "$(TargetDir)mencoder.exe" copy "$(ProjectDir)mencoder.exe" "$(TargetDir)"</Command>
     </PostBuildEvent>
     <MASM>
       <PreprocessorDefinitions>ASMX86_64</PreprocessorDefinitions>
@@ -165,7 +167,8 @@ copy "newton_double.cl" "$(TargetDir)"</Command>
       <Command>if not exist "$(TargetDir)default.pak" copy "Framework\Core\Assets\default.pak" "$(TargetDir)"
 copy UIThemes.pak "$(TargetDir)"
 copy "newton_float.cl" "$(TargetDir)"
-copy "newton_double.cl" "$(TargetDir)"</Command>
+copy "newton_double.cl" "$(TargetDir)"
+if not exist "$(TargetDir)mencoder.exe" copy "$(ProjectDir)mencoder.exe" "$(TargetDir)"</Command>
     </PostBuildEvent>
     <MASM>
       <PreprocessorDefinitions>ASMX86_32</PreprocessorDefinitions>
@@ -195,7 +198,8 @@ copy "newton_double.cl" "$(TargetDir)"</Command>
       <Command>if not exist "$(TargetDir)default.pak" copy "Framework\Core\Assets\default.pak" "$(TargetDir)"
 copy UIThemes.pak "$(TargetDir)"
 copy "newton_float.cl" "$(TargetDir)"
-copy "newton_double.cl" "$(TargetDir)"</Command>
+copy "newton_double.cl" "$(TargetDir)"
+if not exist "$(TargetDir)mencoder.exe" copy "$(ProjectDir)mencoder.exe" "$(TargetDir)"</Command>
     </PostBuildEvent>
     <MASM>
       <PreprocessorDefinitions>ASMX86_64</PreprocessorDefinitions>

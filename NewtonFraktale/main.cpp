@@ -21,6 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+#include "NewtonFraktalGlobals.h"
 #include "NewtonFraktalView.h"
 #include "windows.h"
 #include "resource.h"
@@ -28,7 +29,7 @@ SOFTWARE.
 #include "CPUID.h"
 
 const InstructionSet::InstructionSet_Internal InstructionSet::CPU_Rep;
-
+extern void OpenConsole();
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -69,6 +70,30 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 		return Msg.wParam;
 	} else {
+		Logger::getInstance()->setLogToFile(true);
+		//OpenConsole();
+
+		int duration = 5, framerate = 25;
+		BezierCurve *areaCurve = new BezierCurve();
+		areaCurve->addControlPoint2d(0, 10);
+		areaCurve->addControlPoint2d(2.0, 2.0);
+		areaCurve->addControlPoint2d(5.0, 0.8);
+
+		BezierCurve *centerCurve = new BezierCurve();
+		centerCurve->addControlPoint3d(0, 0, 0);
+		centerCurve->addControlPoint3d(2.0, 0, 0);
+		centerCurve->addControlPoint3d(5.0, 0.48, 0.0);
+
+		__declspec(align(MEM_ALIGN)) int res[2] = { 1000, 1000 };
+
+		NewtonFraktalGeneration *gen = new NewtonFraktalGeneration();
+		NewtonFraktalCLGenerator *clGen = new NewtonFraktalCLGenerator();
+		clGen->initCL(0, 0);
+		gen->registerGenerator(clGen, gen->GENERATION_MODE_CL);
+		gen->setDefaultGenerationMode(gen->GENERATION_MODE_CL);
+
+		gen->generateZoom(areaCurve, centerCurve, framerate, duration, res, Polynom::getRandomPolynom(23), 0.35);
+
 		return 0;
 	}
 }

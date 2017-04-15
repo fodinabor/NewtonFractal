@@ -12,7 +12,7 @@
 Win32Core *core = NULL;
 POINT NewtonFraktalView::minSize = POINT();
 
-static void OpenConsole() {
+void OpenConsole() {
 	int outHandle, errHandle, inHandle;
 	FILE *outFile, *errFile, *inFile;
 	AllocConsole();

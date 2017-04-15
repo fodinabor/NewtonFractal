@@ -9,4 +9,3 @@ public:
 	HWND hwnd;
 	static POINT minSize;
 };
-

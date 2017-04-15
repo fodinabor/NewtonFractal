@@ -38,6 +38,7 @@ public:
 	NewtonFraktalGenerator();
 	virtual ~NewtonFraktalGenerator() {}
 
+	//virtual void calcZeros(NewtonFraktal *fraktal);
 	virtual void runNewton(NewtonFraktal *fraktal);
 
 	/**
@@ -58,10 +59,31 @@ public:
 	* Generates a NewtonFraktal. All the data is in the passed over fraktal obj.
 	* @param fraktal In/Out: should be filled with information about size, pos and polynom before passing over. Is the drawn Fractal after generation.
 	* @param mode In: Indicates how the generation of the Newton Fractal should be run. Possible values: GENERATION_MODE_CPU, GENERATION_MODE_CL
+	* @param save In Opt: If set to true the fractal will be saved automatically with a timestamp as name
 	*/
-	void generate(NewtonFraktal *fraktal, int mode);
+	void generate(NewtonFraktal *fraktal, int mode, bool save = true);
 
-	void registerGenerator(NewtonFraktalGenerator* newGen, int generatorType);
+	/**
+	* Generates a NewtonFraktal. All the data is in the passed over fraktal obj.
+	* @param fraktal In/Out: should be filled with information about size, pos and polynom before passing over. Is the drawn Fractal after generation.
+	* @param generator In: the generation will use the passed over generator.
+	* @param save In Opt: If set to true the fractal will be saved automatically with a timestamp as name
+	*/
+	void generate(NewtonFraktal *fraktal, NewtonFraktalGenerator *generator, bool save = true);
+
+	/**
+	* Generates a series of NewtonFraktals, that dives deeper into the Fractal (or other way round).
+	* @param area: 2D BezierCurve time, area (size)
+	* @param center: 3D BezierCurve time, x, y (of the center)
+	* @param framerate: the framerate at which the zoom shall run (in 1sek/framerate)
+	* @param duration: how long the zoom shall take (in sec)
+	* @param resultion: field with two entries x, y resolution of the fractals
+	* @param polynom: the polynom used for generation
+	*/
+	void generateZoom(BezierCurve *areaCurve, BezierCurve* centerCurve, int framerate, int duration, int* resolution, Polynom* polynom, double contrast);
+
+	NewtonFraktalGenerator* registerGenerator(NewtonFraktalGenerator* newGen, int generatorType);
+	void setDefaultGenerationMode(int newDef);
 
 	static vector<Color> colors;
 
@@ -80,8 +102,12 @@ private:
 	
 	NewtonFraktalGenerator* getGeneratorForMode(int mode);
 
+	int defaultGenerationMode;
+	NewtonFraktalGenerator *defaultGenerator;
+
 	//////////////////
 	// Misc methods //
 	//////////////////
 
+	static String getExePath();
 };
