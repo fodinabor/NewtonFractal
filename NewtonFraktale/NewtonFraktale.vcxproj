@@ -51,6 +51,9 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
+  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
@@ -99,6 +102,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>Framework\Core\Dependencies\lib;Framework\Core\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>Polycore_d.lib;PolycodeUI_d.lib;zlibd.lib;freetype_d.lib;liboggd.lib;libvorbisd.lib;libvorbisfiled.lib;OpenAL32d.lib;physfsd.lib;libpng15_staticd.lib;opengl32.lib;glu32.lib;winmm.lib;ws2_32.lib;OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
       <Command>if not exist "$(TargetDir)default.pak" copy "Framework\Core\Assets\default.pak" "$(TargetDir)"
@@ -106,6 +110,9 @@ copy UIThemes.pak "$(TargetDir)"
 copy "newton_float.cl" "$(TargetDir)"
 copy "newton_double.cl" "$(TargetDir)"</Command>
     </PostBuildEvent>
+    <MASM>
+      <PreprocessorDefinitions>ASMX86_32</PreprocessorDefinitions>
+    </MASM>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -129,6 +136,9 @@ copy UIThemes.pak "$(TargetDir)"
 copy "newton_float.cl" "$(TargetDir)"
 copy "newton_double.cl" "$(TargetDir)"</Command>
     </PostBuildEvent>
+    <MASM>
+      <PreprocessorDefinitions>ASMX86_64</PreprocessorDefinitions>
+    </MASM>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -149,6 +159,7 @@ copy "newton_double.cl" "$(TargetDir)"</Command>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>Framework\Core\Dependencies\lib;Framework\Core\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>Polycore.lib;PolycodeUI.lib;zlib.lib;freetype.lib;libogg.lib;libvorbis.lib;libvorbisfile.lib;OpenAL32.lib;physfs.lib;libpng15_static.lib;opengl32.lib;glu32.lib;winmm.lib;ws2_32.lib;OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
       <Command>if not exist "$(TargetDir)default.pak" copy "Framework\Core\Assets\default.pak" "$(TargetDir)"
@@ -156,6 +167,9 @@ copy UIThemes.pak "$(TargetDir)"
 copy "newton_float.cl" "$(TargetDir)"
 copy "newton_double.cl" "$(TargetDir)"</Command>
     </PostBuildEvent>
+    <MASM>
+      <PreprocessorDefinitions>ASMX86_32</PreprocessorDefinitions>
+    </MASM>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -183,17 +197,26 @@ copy UIThemes.pak "$(TargetDir)"
 copy "newton_float.cl" "$(TargetDir)"
 copy "newton_double.cl" "$(TargetDir)"</Command>
     </PostBuildEvent>
+    <MASM>
+      <PreprocessorDefinitions>ASMX86_64</PreprocessorDefinitions>
+    </MASM>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="NewtonFraktal.cpp" />
     <ClCompile Include="NewtonFraktalApp.cpp" />
-    <ClCompile Include="NewtonFraktalCLGeneration.cpp" />
+    <ClCompile Include="NewtonFraktalCLGenerator.cpp" />
+    <ClCompile Include="NewtonFraktalGeneration.cpp" />
     <ClCompile Include="NewtonFraktalView.cpp" />
     <ClCompile Include="Polynom.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CPUID.h" />
+    <ClInclude Include="NewtonFraktal.h" />
     <ClInclude Include="NewtonFraktalApp.h" />
-    <ClInclude Include="NewtonFraktalCLGeneration.h" />
+    <ClInclude Include="NewtonFraktalCLGenerator.h" />
+    <ClInclude Include="NewtonFraktalGeneration.h" />
+    <ClInclude Include="NewtonFraktalGlobals.h" />
     <ClInclude Include="NewtonFraktalView.h" />
     <ClInclude Include="Polynom.h" />
     <ClInclude Include="resource.h" />
@@ -201,6 +224,7 @@ copy "newton_double.cl" "$(TargetDir)"</Command>
   <ItemGroup>
     <None Include="newton_double.cl" />
     <None Include="newton_float.cl" />
+    <None Include="Structs_.inc" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="NewtonFraktale.rc" />
@@ -208,5 +232,11 @@ copy "newton_double.cl" "$(TargetDir)"</Command>
   <ItemGroup>
     <Image Include="icon1.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <MASM Include="PackedConversions_.asm" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
+  </ImportGroup>
 </Project>

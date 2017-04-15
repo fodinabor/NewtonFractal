@@ -22,11 +22,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #include "Polynom.h"
+#include "NewtonFraktalGlobals.h"
+#include "NewtonFraktalGeneration.h"
 #include "PolyLogger.h"
 #include <cstring>
 
 extern struct cl_double_complex createComplexFromKarthes(cl_double real, cl_double imag);
 extern struct cl_float_complex createComplexFromKarthes(cl_float real, cl_float imag);
+//extern bool compComplex(const std::complex<cl_double> z, const std::complex<cl_double> c, double comp);
 
 Polynom::Polynom(){}
 
@@ -38,10 +41,18 @@ void Polynom::addCoefficient(complex<cl_double> nC){
 
 void Polynom::differentiate(){
 	if (coefficients.size() == 0) return;
-	for (unsigned int i = 0; i < coefficients.size()-1; i++){
+	for (unsigned int i = 0; i < coefficients.size() - 1; i++){
 		coefficients[i] = coefficients[i + 1] * (double)(i + 1);
 	}
 	coefficients.pop_back();
+}
+
+Polynom * Polynom::getDerivation() {
+	Polynom* derivation = new Polynom();
+	for (unsigned int i = 1; i < coefficients.size(); i++) {
+		derivation->addCoefficient(coefficients[i] * (double)(i));
+	}
+	return derivation;
 }
 
 complex<cl_double> Polynom::getValue(complex<cl_double> nC){
@@ -53,6 +64,49 @@ complex<cl_double> Polynom::getValue(complex<cl_double> nC){
 		sum = coefficients[coefficients.size() - i - 1] + (sum * nC);
 	}
 	return sum;
+}
+
+vector<complex<cl_double>> Polynom::getZeros() {
+	std::vector<std::complex<cl_double>> zeros, zerosT;
+	Polynom *derivation = getDerivation();
+
+	for (int y = -200; y < 200; y++) {
+		for (int x = -200; x < 200; x++) {
+			std::complex<cl_double> z(x, y);
+			std::complex<cl_double> zo(0, 0);
+			for (int i = 0; i < 600; i++) {
+				zo = z;
+				z = z - getValue(z) / derivation->getValue(z);
+				if (NewtonFraktalGenerator::compComplex(z, zo, RESOLUTION)) {
+					zerosT.push_back(z);
+					break;
+				}
+			}
+			x++;
+		}
+		y++;
+	}
+
+	zeros.clear();
+
+	for (int i = 0; i < zerosT.size(); i++) {
+		if (zerosT[i].real() == 10000 && zerosT[i].imag() == 10000)
+			continue;
+
+		size_t s = zeros.size();
+		for (int j = 0; j <= s; j++) {
+			if (j == zeros.size()) {
+				zeros.push_back(zerosT[i]);
+				Logger::log("Zero %d: (%f|%f)\n", j, zeros[j].real(), zeros[j].imag());
+			} else if (NewtonFraktalGenerator::compComplex(zeros[j], zerosT[i], RESOLUTION)) {
+				break;
+			}
+		}
+		if (zeros.size() == getNumCoefficients() - 1)
+			break;
+	}
+
+	return zeros;
 }
 
 int Polynom::getNumCoefficients() {
@@ -119,10 +173,20 @@ void Polynom::clear() {
 	coefficients.clear();
 }
 
+Polynom * Polynom::getRandomPolynom(int maxDegree) {
+	Polynom *retPoly = new Polynom();
+
+	for (int i = 0; i <= maxDegree; i++) {
+		retPoly->addCoefficient(complex<cl_double>((rand() % 40) - 20, (rand() % 40) - 20));
+	}
+
+	return retPoly;
+}
+
 Polynom* Polynom::readFromString(String polynom){
 	Polynom* retPoly = new Polynom();
 
-	int idx = polynom.length();
+	size_t idx = polynom.length();
 	bool first = true;
 	String substr;
 	while (idx > 0){
@@ -148,7 +212,7 @@ Polynom* Polynom::readFromString(String polynom){
 }
 
 struct cl_double_complex* Polynom::getCLCoefficients(){
-	struct cl_double_complex* coefficientsCL = (struct cl_double_complex*)malloc(coefficients.size()*sizeof(struct cl_double_complex) * 2);
+	struct cl_double_complex* coefficientsCL = (struct cl_double_complex*)_aligned_malloc(coefficients.size()*sizeof(struct cl_double_complex), MEM_ALIGN);
 	for (int i = 0; i < coefficients.size(); i++){
 		coefficientsCL[i] = createComplexFromKarthes(coefficients[i].real(),coefficients[i].imag());
 	}
@@ -156,7 +220,7 @@ struct cl_double_complex* Polynom::getCLCoefficients(){
 }
 
 struct cl_float_complex* Polynom::getFloatCLCoefficients() {
-	struct cl_float_complex* coefficientsCL = (struct cl_float_complex*)malloc(coefficients.size() * sizeof(struct cl_float_complex) * 2);
+	struct cl_float_complex* coefficientsCL = (struct cl_float_complex*)_aligned_malloc(coefficients.size() * sizeof(struct cl_float_complex), MEM_ALIGN);
 	for (int i = 0; i < coefficients.size(); i++) {
 		coefficientsCL[i] = createComplexFromKarthes((cl_float) coefficients[i].real(), (cl_float) coefficients[i].imag());
 	}

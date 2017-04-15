@@ -23,12 +23,13 @@ SOFTWARE.
 */
 
 #include "NewtonFraktalApp.h"
+#include "NewtonFraktal.h"
+#include "NewtonFraktalGeneration.h"
 #include <ctime>
 #include <time.h>
 #include <cmath>
 
 #define pi 3.14159265359
-extern bool compComplex(const std::complex<cl_double> z, const std::complex<cl_double> c, double comp);
 
 std::vector<int> colorsHex = {
 	0x0000FF,
@@ -78,7 +79,7 @@ NewtonFraktalApp::NewtonFraktalApp(NewtonFraktalView *view) {
 
 	clOptionsSet = false;
 
-	srand(time(NULL));
+	gen = new NewtonFraktalGeneration();
 
 	polynom = new Polynom();
 	//polynom = Polynom::readFromString("( 4 + 2 i)*x^ 18 + ( 7 + 9 i)*x^ 17 + ( 3 + 11 i)*x^ 16 + ( 6 + 2 i)*x^ 15 + ( 5 + 8 i)*x^ 14 + ( 11 + 6 i)*x^ 13 + ( 7 + 7 i)*x^ 12 + ( 3 + 2 i)*x^ 11 + ( 9 + 6 i)*x^ 10 + ( 6 + 12 i)*x^ 9 + ( 2 + 10 i)*x^ 8 + ( 11 + 1 i)*x^ 7 + ( 12 + 1 i)*x^ 6 + ( 5 + 5 i)*x^ 5 + ( 14 + 7 i)*x^ 4 + ( 3 + 3 i)*x^ 3 + ( 4 + 14 i)*x^ 2 + ( 10 + 4 i)*x + ( 2 + 11 i)");
@@ -147,15 +148,13 @@ NewtonFraktalApp::NewtonFraktalApp(NewtonFraktalView *view) {
 
 	ratio = (double)res[1] / (double)res[0];
 
-	zoom = new cl_double[2];
+	zoom = (double*)_aligned_malloc(2 * sizeof(double), MEM_ALIGN);
 	zoom[0] = 10;
 	zoom[1] = 10 * ratio;
 
-	centerCL = new cl_double[2];
+	centerCL = (double*)_aligned_malloc(2 * sizeof(double), MEM_ALIGN);
 	centerCL[0] = 0;
 	centerCL[1] = 0;
-
-	genCL = new NewtonFraktalCLGeneration();
 
 	scene = new Scene(Scene::SCENE_2D);
 	scene->getDefaultCamera()->setOrthoSize(res[0], res[1]);
@@ -171,10 +170,12 @@ NewtonFraktalApp::NewtonFraktalApp(NewtonFraktalView *view) {
 	ui->addChild(treeCont);
 	treeCont->getRootNode()->addEventListener(this, UITreeEvent::EXECUTED_EVENT);
 	
-	for (int i = 0; i < genCL->platformStrs.size(); i++){
-		UITree* plat = treeCont->getRootNode()->addTreeChild(Services()->getConfig()->getStringValue("Polycode","uiFileBrowserFolderIcon"), genCL->platformStrs[i], (void*)i);
-		for (int j = 0; j < genCL->deviceStrs[i].size(); j++){
-			plat->addTreeChild("DeviceIcon.png", genCL->deviceStrs[i][j], (void*)j);
+	std::vector<String> platforms = NewtonFraktalCLGenerator::getPlatforms();
+	std::vector<std::vector<String>> devices = NewtonFraktalCLGenerator::getDevices();
+	for (int i = 0; i < platforms.size(); i++){
+		UITree* plat = treeCont->getRootNode()->addTreeChild(Services()->getConfig()->getStringValue("Polycode","uiFileBrowserFolderIcon"), platforms[i], (void*)i);
+		for (int j = 0; j < devices[i].size(); j++){
+			plat->addTreeChild("DeviceIcon.png", devices[i][j], (void*)j);
 		}
 		plat->toggleCollapsed();
 	}
@@ -318,7 +319,6 @@ NewtonFraktalApp::NewtonFraktalApp(NewtonFraktalView *view) {
 
 	win->focusChild(NULL);
 	dragging = false;
-	useCPU = true;
 	startPoint.x = 0.0;
 	startPoint.y = 0.0;
 
@@ -395,214 +395,6 @@ bool NewtonFraktalApp::Update() {
 	return update;
 }
 
-void NewtonFraktalApp::drawFractal(){
-	const int xRes = res[0];
-	const int yRes = res[1];
-	bool cl;
-
-	double *result = NULL;
-	int *typeRes = NULL, *iterations = NULL;
-
-	if (genCL && genCL->err == CL_SUCCESS){
-		cl = true;
-	} else {
-		cl = false;
-
-		genCL->freeMemory();
-
-		result = (double*) malloc(xRes * yRes * sizeof(double));
-		typeRes = (int*) malloc(xRes * yRes * sizeof(int));
-		iterations = (int*) malloc(xRes * yRes * sizeof(int));
-
-		findZeros();
-		runNewton(result, iterations, typeRes);
-	}
-
-	clock_t end = clock();
-
-	clock_t max_begin = clock();
-
-	double maxIters = 0;
-	for (int y = 0; y < yRes; y++){
-		for (int x = 0; x < xRes; x++){
-			if (cl){
-				if (genCL->typeRes[x + y * xRes] >= 0){
-					maxIters = MAX(maxIters, genCL->iterations[x + y * xRes]);
-				}
-			} else {
-				if (typeRes[x + y * xRes] >= 0){
-					maxIters = MAX(maxIters, iterations[x + y * xRes]);
-				}
-			}
-		}
-	}
-
-	clock_t max_end = clock();
-
-	clock_t draw_begin = clock();
-
-	Image *fraktal = new Image(xRes, yRes);
-
-	BezierCurve* colorCurve = new BezierCurve();
-	colorCurve->cacheHeightValues = true;
-	colorCurve->setHeightCacheResolution(8192);
-
-	colorCurve->addControlPoint2dWithHandles(maxIters * -0.01, 1.5, maxIters * 0.0, 1.0, maxIters * 0.01, 0.5 * contrastValue);
-	colorCurve->addControlPoint2dWithHandles(maxIters * 0.375 * contrastValue, 0.01, maxIters * 1.0, 0.0, maxIters * 1.3, -0.01);
-
-	for (int y = 0; y < yRes; y++){
-		for (int x = 0; x < xRes; x++){
-			int type;
-			double conDiv, it;
-			if (cl) {
-				if (usingDouble())
-					conDiv = genCL->result_double[x + y * xRes];
-				else
-					conDiv = genCL->result_float[x + y * xRes];
-				type = genCL->typeRes[x + y * xRes];
-				it = genCL->iterations[x + y * xRes];
-			} else {
-				conDiv = result[x + y * xRes];
-				type = typeRes[x + y * xRes];
-				it = iterations[x + y * xRes];
-			}
-			
-			if (type >= 0){
-				Color col = colors[type];
-				//col.setColorHexRGB(colors[type]);
-				conDiv = it + conDiv;
-
-				if (conDiv > maxIters)
-					conDiv = maxIters;
-				if (conDiv < 0.3)
-					conDiv = 0.3;
-
-				conDiv = colorCurve->getYValueAtX(conDiv/maxIters);
-				col.setColorHSV(col.getHue(), col.getSaturation(), conDiv);
-				fraktal->setPixel(x, y, col);
-			} else {
-				if(type == -1)
-					fraktal->setPixel(x, y, 0, 0, 0, 1);
-				else 
-					fraktal->setPixel(x, y, 1, 1, 1, 1);
-			}
-		}
-	}
-
-	clock_t draw_end = clock();
-
-	FILE* logFile;
-	fopen_s(&logFile, "polynoms.log", "a");
-	String timeS = String::IntToString(time(NULL)), polynomS = polynom->printPolynom();
-	fprintf(logFile, "Time: %s, Polynom: %s, Center: %.15Lf, %.15Lf, Area size: x: %.15Lf y: %.15Lf, Resolution: %dx%d, Contrast: %f, MaxIters: %f, The computation took: %s secs, searching the max: %s secs, drawing: %s secs\n", timeS.c_str(), polynomS.c_str(), centerCL[0], centerCL[1], zoom[0], zoom[1], res[0], res[1], contrastValue, maxIters, String::NumberToString(double(end - begin) / CLOCKS_PER_SEC).c_str(), String::NumberToString(double(max_end - max_begin) / CLOCKS_PER_SEC).c_str(), String::NumberToString(double(draw_end - draw_begin) / CLOCKS_PER_SEC).c_str());
-	fraktal->saveImage(timeS + ".png");
-	fclose(logFile);
-
-	sceneFraktal = new SceneImage(fraktal);
-	scene->addChild(sceneFraktal);
-
-	delete fraktal;
-
-	if (!cl){
-		free(result);
-		free(typeRes);
-		free(iterations);
-	}
-
-	genCL->freeMemory();
-
-	double screenRatio = core->getYRes() / core->getXRes();
-	if (screenRatio > ratio) {
-		scene->getActiveCamera()->setOrthoSize(res[0], res[0] * screenRatio);
-	} else {
-		scene->getActiveCamera()->setOrthoSize(res[0] / screenRatio, res[1]);
-	}
-}
-
-void NewtonFraktalApp::findZeros(){
-	std::vector<std::complex<cl_double>> zerosT;
-	for (int y = -200; y < 200; y++) {
-		for (int x = -200; x < 200; x++) {
-			std::complex<cl_double> z(x, y);
-			std::complex<cl_double> zo(0, 0);
-			for (int i = 0; i < 600; i++) {
-				zo = z;
-				z = z - polynom->getValue(z) / derivation->getValue(z);
-				if (compComplex(z, zo, RESOLUTION)) {
-					zerosT.push_back(z);
-					break;
-				}
-			}
-			x++;
-		}
-		y++;
-	}
-	
-	zeros.clear();
-
-	for (int i = 0; i < zerosT.size(); i++){
-		if (zerosT[i].real() == 10000 && zerosT[i].imag() == 10000)
-			continue;
-
-		int s = zeros.size();
-		for (int j = 0; j <= s; j++){
-			if (j == zeros.size()){
-				zeros.push_back(zerosT[i]);
-				Logger::log("Zero %d: (%f|%f)\n", j, this->zeros[j].real(), this->zeros[j].imag());
-			} else if (compComplex(zeros[j], zerosT[i], RESOLUTION)) {
-				break;
-			}
-		}
-		if (zeros.size() == polynom->getNumCoefficients()-1)
-			break;
-	}
-}
-
-void NewtonFraktalApp::runNewton(double *result, int *iterations, int *typeRes) {
-	std::complex<double> z, zo, p, d;
-	const int xRes = res[0];
-	const int yRes = res[1];
-	
-	for (int y = 0; y < res[1]; y++){
-		for (int x = 0; x < res[0]; x++){
-			const double a = (double)zoom[0] * ((double)x - ((double)xRes / 2.0)) / xRes + centerCL[0];
-			const double b = (double)zoom[1] * (((double)yRes / 2.0) - (double)y) / yRes + centerCL[1];
-
-			z = complex<double>(a, b);
-			typeRes[x + xRes * y] = -1;
-			result[x + xRes * y] = 0;
-
-			bool found = false;
-			int i = 0;
-			while (i < 600 && !found) {
-				p = polynom->getValue(z);
-				d = derivation->getValue(z);
-				
-				zo = z;
-
-				z = z - p / d;
-
-				i++;
-
-				for (int j = 0; j < zeros.size(); j++) {
-					if (compComplex(z, zeros[j], RESOLUTION)) {
-						typeRes[x + xRes * y] = j;
-						result[x + y * xRes] = (log(RESOLUTION) - log(abs(zo - zeros[j]))) / (log(abs(z - zeros[j])) - log(abs(zo - zeros[j])));
-						found = true;
-						break;
-					}
-				}
-
-				if (compComplex(z, zo, RESOLUTION / 100) && !found) {
-					typeRes[x + xRes * y] = -1;
-					break;
-				}
-			}
-			iterations[x + xRes * y] = i;
-		}
-	}
-}
-
 cl_double mapCL(cl_double x, cl_double in_min, cl_double in_max, cl_double out_min, cl_double out_max){
 	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
@@ -613,9 +405,13 @@ void NewtonFraktalApp::handleEvent(Event* e){
 		begin = clock();
 
 		if ((int)treeCont->getRootNode()->getSelectedNode()->getUserData() >= 0){
-			useCPU = false;
-			cl_int paramc[] = { polynom->getNumCoefficients(), derivation->getNumCoefficients() };
-			genCL->initCLAndRunNewton(zoom, res, polynom->getCLCoefficients(), derivation->getCLCoefficients(), paramc, (int)treeCont->getRootNode()->getSelectedNode()->getParent()->getUserData(), (int)treeCont->getRootNode()->getSelectedNode()->getUserData());
+			NewtonFraktalCLGenerator *clGen = new NewtonFraktalCLGenerator();
+			clGen->initCL((int)treeCont->getRootNode()->getSelectedNode()->getParent()->getUserData(), (int)treeCont->getRootNode()->getSelectedNode()->getUserData());
+			gen->registerGenerator(clGen, gen->GENERATION_MODE_CL);
+
+			generationMode = gen->GENERATION_MODE_CL;
+		} else {
+			generationMode = gen->GENERATION_MODE_CPU;
 		}
 
 		ui->removeEntity(treeCont);
@@ -627,8 +423,19 @@ void NewtonFraktalApp::handleEvent(Event* e){
 		zoomField->enabled = true;
 		zoomField->visible = true;
 
-		drawFractal();
-		
+		NewtonFraktal *fraktal = new NewtonFraktal(res[0], res[1]);
+		fraktal->setArea(zoom[0], zoom[1]);
+		fraktal->setCenter(centerCL[0], centerCL[1]);
+		fraktal->setContrast(contrastValue);
+		fraktal->setPolynom(polynom);
+
+		gen->generate(fraktal, generationMode);
+
+		sceneFraktal = new SceneImage(fraktal);
+		scene->addEntity(sceneFraktal);
+
+		delete fraktal;
+
 #ifdef _WINDOWS
 		MSG Msg;
 		while (PeekMessage(&Msg, NULL, 0, 0, PM_REMOVE)) {
@@ -738,7 +545,7 @@ void NewtonFraktalApp::redrawIt(){
 		zoom[1] = zoomField->getText().toNumber() * ratio;
 	}
 
-	cl_double *center = new cl_double[2];
+	cl_double *center = (double*)_aligned_malloc(2 * sizeof(double), MEM_ALIGN);
 	if (centerX->getText().isNumber()){
 		center[0] = centerX->getText().toNumber();
 	}
@@ -753,25 +560,21 @@ void NewtonFraktalApp::redrawIt(){
 	}
 
 	begin = clock();
-	if (!useCPU) {
-		cl_int paramc[] = { polynom->getNumCoefficients(), derivation->getNumCoefficients() };
-		if(usingDouble())
-			genCL->runNewton(zoom, res, center, polynom->getCLCoefficients(), derivation->getCLCoefficients(), paramc);
-		else {
-			cl_float* zoom_float = new cl_float[2];
-			zoom_float[0] = (cl_float) zoom[0];
-			zoom_float[1] = (cl_float) zoom[1];
-
-			cl_float* center_float = new cl_float[2];
-			center_float[0] = (cl_float) center[0];
-			center_float[1] = (cl_float) center[1];
-
-			genCL->runNewton(zoom_float, res, center_float, polynom->getFloatCLCoefficients(), derivation->getFloatCLCoefficients(), paramc);
-		}
-	}
 
 	this->centerCL = center;
-	drawFractal();
+
+	NewtonFraktal *fraktal = new NewtonFraktal(res[0], res[1]);
+	fraktal->setArea(zoom[0], zoom[1]);
+	fraktal->setCenter(centerCL[0], centerCL[1]);
+	fraktal->setContrast(contrastValue);
+	fraktal->setPolynom(polynom);
+
+	gen->generate(fraktal, generationMode);
+
+	sceneFraktal = new SceneImage(fraktal);
+	scene->addEntity(sceneFraktal);
+
+	delete fraktal;
 
 	centerSel->visible = false;
 	centerSel->setPosition(((core->getXRes() / 2) - center[0]), (core->getYRes() / 2) - center[1]);

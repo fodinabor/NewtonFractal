@@ -22,20 +22,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
-#define MAX_DEGREE 23
-#define MAX_DEGREE_FLOAT 8
 
 #include "NewtonFraktalView.h"
 #include "Polycode.h"
 #include <PolycodeUI.h>
 #include "Polynom.h"
-#include "NewtonFraktalCLGeneration.h"
+#include "NewtonFraktalCLGenerator.h"
+#include "NewtonFraktalGlobals.h"
 #include <complex>
 #include <ctime>
 
 using namespace Polycode;
-#define RESOLUTION 0.0000000001
-#define SIZE 2
 
 cl_double mapCL(cl_double x, cl_double in_min, cl_double in_max, cl_double out_min, cl_double out_max);
 
@@ -45,15 +42,12 @@ T clamp(const T &val, const T &min, const T &max)
 	return max(min, min(max, val));
 }
 
+class NewtonFraktalGeneration;
+
 class NewtonFraktalApp : public EventHandler {
 public:
 	NewtonFraktalApp(NewtonFraktalView *view);
 	~NewtonFraktalApp();
-    
-	void runNewton(double *result, int *iterations, int *typeRes);
-	void findZeros();
-
-	void drawFractal();
 
     bool Update();
 	void handleEvent(Event *e);
@@ -64,18 +58,16 @@ private:
 	Scene *ui;
 	Scene *selScene;
 
-	//int* getMaxAndMin(int *data);
 	void redrawIt();
 	void generateRandom();
 
-	NewtonFraktalCLGeneration* genCL;
+	NewtonFraktalGeneration* gen;
 
 	Polynom* polynom;
 	Polynom* derivation;
 
 	std::vector<std::complex<cl_double>> zeros;
 
-	//Image* fraktal;
 	SceneImage *sceneFraktal;
 
 	UIWindow* win;
@@ -116,7 +108,7 @@ private:
 	UITreeContainer* treeCont;
 	bool clOptionsSet;
 	bool clOptionsJustSet;
-	bool useCPU;
+	int generationMode;
 
 	clock_t begin, end;
 

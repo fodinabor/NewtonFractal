@@ -25,6 +25,10 @@ SOFTWARE.
 #include "windows.h"
 #include "resource.h"
 #include "NewtonFraktalApp.h"
+#include "CPUID.h"
+
+const InstructionSet::InstructionSet_Internal InstructionSet::CPU_Rep;
+
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -38,6 +42,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 		else if (arg == "-q" || arg == "/q")
 			createWindow = false;
 	}
+
+	srand(time(NULL));
 
 #ifdef _DEBUG
 	debug = true;

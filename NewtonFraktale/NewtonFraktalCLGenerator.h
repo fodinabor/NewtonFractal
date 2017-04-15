@@ -26,30 +26,29 @@ SOFTWARE.
 #define __CL_ENABLE_EXCEPTIONS
 #define __NO_STD_VECTOR
 #include <CL/cl.hpp>
+#include "NewtonFraktalGeneration.h"
 
-class NewtonFraktalCLGeneration {
+class NewtonFraktalCLGenerator : public NewtonFraktalGenerator {
 public:
-	NewtonFraktalCLGeneration();
-	~NewtonFraktalCLGeneration();
+	NewtonFraktalCLGenerator();
+	~NewtonFraktalCLGenerator();
 	
-	void initCLAndRunNewton(const cl_double* zoom, const cl_int* res, const struct cl_double_complex* params, const struct cl_double_complex* paramsD, const cl_int* paramc, int userChoiceP, int userChoice);
-	void calcZeros(const struct cl_double_complex* params, const struct cl_double_complex* paramsD, const cl_int* paramc, struct cl_double_complex* zerosOut);
-	void calcZeros(const struct cl_float_complex* params, const struct cl_float_complex* paramsD, const cl_int* paramc, struct cl_float_complex* zerosOut);
-	void runNewton(const cl_double* zoom, const cl_int* res, const cl_double* center, const struct cl_double_complex* params, const struct cl_double_complex* paramsD, const cl_int* paramc);
-	void runNewton(const cl_float* zoom, const cl_int* res, const cl_float* center, const struct cl_float_complex* params, const struct cl_float_complex* paramsD, const cl_int* paramc);
+	void initCL(int userChoiceP, int userChoice);
+
+	//void initCLAndRunNewton(const cl_double* zoom, const cl_int* res, const struct cl_double_complex* params, const struct cl_double_complex* paramsD, const cl_int* paramc, int userChoiceP, int userChoice);
+	
+	void runNewton(NewtonFraktal* fraktal);
 
 	void freeMemory();
 
-	cl_double* result_double;
-	cl_float* result_float;
-	cl_int* iterations;
-	cl_int* typeRes;
 	cl_int err;
 
 	std::vector<std::vector<Polycode::String>>deviceStrs;
 	std::vector<Polycode::String> platformStrs;
 
 	static bool useDouble;
+	static std::vector<String> getPlatforms();
+	static std::vector<std::vector<String>> getDevices();
 
 protected:
 	cl::Device defaultDev;
@@ -64,7 +63,16 @@ protected:
 	cl_ulong maxPixelPerCall;
 
 	void convertDoubleArrayToFloat(const cl_double* in, cl_float* out, int size);
+	void convertFloatArrayToDouble(const cl_float* in, cl_double* out, int size);
 	void convertDoubleComplexArrayToFloat(const cl_double_complex* in, cl_float_complex* out, int size);
+	void convertFloatComplexArrayToDouble(const cl_float_complex * in, cl_double_complex * out, int size);
+
+	void calcZeros(const struct cl_double_complex* params, const struct cl_double_complex* paramsD, const cl_int* paramc, struct cl_double_complex* zerosOut);
+	void calcZeros(const struct cl_float_complex* params, const struct cl_float_complex* paramsD, const cl_int* paramc, struct cl_float_complex* zerosOut);
+	void runNewton(const cl_double * zoom, const cl_int * res, const cl_double * center, const cl_double_complex * params, const cl_double_complex * paramsD, const cl_int * paramc, NewtonFraktal* fraktal);
+	//void runNewtonDouble(NewtonFraktal* fraktal);
+	//void runNewtonFloat(NewtonFraktal* fraktal);
+
 };
 
 void __stdcall freed_memory(cl_mem id, void* data);

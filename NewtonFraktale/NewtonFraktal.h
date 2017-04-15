@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2016 By Joachim Meyer
+Copyright (c) 2017 By Joachim Meyer
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,62 +21,49 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+
 #pragma once
+
+#include "PolyImage.h"
+#include "Polynom.h"
 #include <vector>
-#include <CL\opencl.h>
 #include <complex>
-#include <PolyString.h>
-#include "NewtonFraktalGlobals.h"
 
-using namespace Polycode;
-using namespace std;
-
-/*__declspec(align(16))*/ struct cl_double_complex {
-	cl_double im;
-	cl_double re;
-	cl_double r;
-	cl_double phi;
-
-	cl_char isPolar;
-	cl_char isKarthes;
-};
-
-/*__declspec(align(16))*/ struct cl_float_complex {
-	cl_float im;
-	cl_float re;
-	cl_float r;
-	cl_float phi;
-
-	cl_char isPolar;
-	cl_char isKarthes;
-};
-
-class Polynom {
+class NewtonFraktal : public Image {
 public:
-	Polynom();
-	~Polynom();
+	NewtonFraktal(int xRes, int yRes);
+	~NewtonFraktal();
 
-	void addCoefficient(complex<cl_double> nC);
-	void differentiate();
+	void draw();
+
+	void setArea(double x, double y);
+	void setCenter(double x, double y);
+	void setContrast(double cont);
+	void setPolynom(Polynom *p);
+
+	int* getResolution();
+	double* getArea();
+	double* getCenter();
+	Polynom* getPolynom();
 	Polynom* getDerivation();
 
-	complex<cl_double> getValue(complex<cl_double> nC);
-	vector<complex<cl_double>> getZeros();
+	void allocGenRes();
 
-	int getNumCoefficients();
-	complex<cl_double> getCoefficient(int idx);
+	double *getValues();
+	int *getIterations();
+	int *getTypes();
 
-	String printPolynom();
-	String getString();
-
-	void clear();
-
-	static Polynom* getRandomPolynom(int maxDegree);
-	static Polynom* readFromString(String polynom);
-
-	struct cl_double_complex* getCLCoefficients();
-	struct cl_float_complex* getFloatCLCoefficients();
 private:
-	std::vector<complex<cl_double>> coefficients;
+	__declspec(align(MEM_ALIGN)) double area[2];
+	__declspec(align(MEM_ALIGN)) double center[2];
+
+	Polynom* polynom;
+	Polynom* derivation = nullptr;
+
+	double contrast;
+
+	double *values;
+	int *iterations;
+	int *types;
 };
 
