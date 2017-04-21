@@ -144,6 +144,7 @@ NewtonFraktalCLGenerator::~NewtonFraktalCLGenerator() {}
 
 void NewtonFraktalCLGenerator::initCL(int userChoiceP, int userChoice) {
 	err = CL_SUCCESS;
+	this->status = this->err;
 	try {
 		std::string deviceName, vendor, extensionsStl;
 		bool foundFP64 = false;
@@ -219,6 +220,7 @@ void NewtonFraktalCLGenerator::initCL(int userChoiceP, int userChoice) {
 		Logger::log("[OpenCL] ERROR: %s (%d)\n", err.what(), err.err());
 		std::cerr << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(defaultDev);
 		this->err = err.err();
+		this->status = this->err;
 	}
 }
 

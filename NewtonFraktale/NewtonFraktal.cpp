@@ -38,7 +38,7 @@ NewtonFraktal::~NewtonFraktal() {
 }
 
 void NewtonFraktal::draw() {
-	clock_t max_begin = clock();
+	max_begin = clock();
 
 	double maxIters = 0;
 	for (int y = 0; y < height; y++) {
@@ -49,9 +49,9 @@ void NewtonFraktal::draw() {
 		}
 	}
 
-	clock_t max_end = clock();
+	max_end = clock();
 
-	clock_t draw_begin = clock();
+	draw_begin = clock();
 
 	BezierCurve* colorCurve = new BezierCurve();
 	colorCurve->cacheHeightValues = true;
@@ -90,7 +90,7 @@ void NewtonFraktal::draw() {
 		}
 	}
 
-	clock_t draw_end = clock();
+	draw_end = clock();
 }
 
 void NewtonFraktal::setArea(double x, double y) {
@@ -122,6 +122,10 @@ double * NewtonFraktal::getArea() {
 
 double * NewtonFraktal::getCenter() {
 	return center;
+}
+
+double NewtonFraktal::getContrast() {
+	return contrast;
 }
 
 Polynom * NewtonFraktal::getPolynom() {

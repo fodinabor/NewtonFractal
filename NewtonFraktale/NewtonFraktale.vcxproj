@@ -109,7 +109,7 @@
 copy UIThemes.pak "$(TargetDir)"
 copy "newton_float.cl" "$(TargetDir)"
 copy "newton_double.cl" "$(TargetDir)"
-if not exist "$(TargetDir)mencoder.exe" copy "$(ProjectDir)mencoder.exe" "$(TargetDir)"</Command>
+if not exist "$(TargetDir)ffmpeg.exe" copy "$(ProjectDir)ffmpeg.exe" "$(TargetDir)"</Command>
     </PostBuildEvent>
     <MASM>
       <PreprocessorDefinitions>ASMX86_32</PreprocessorDefinitions>
@@ -136,7 +136,7 @@ if not exist "$(TargetDir)mencoder.exe" copy "$(ProjectDir)mencoder.exe" "$(Targ
 copy UIThemes.pak "$(TargetDir)"
 copy "newton_float.cl" "$(TargetDir)"
 copy "newton_double.cl" "$(TargetDir)"
-if not exist "$(TargetDir)mencoder.exe" copy "$(ProjectDir)mencoder.exe" "$(TargetDir)"</Command>
+if not exist "$(TargetDir)ffmpeg.exe" copy "$(ProjectDir)ffmpeg.exe" "$(TargetDir)"</Command>
     </PostBuildEvent>
     <MASM>
       <PreprocessorDefinitions>ASMX86_64</PreprocessorDefinitions>
@@ -168,7 +168,7 @@ if not exist "$(TargetDir)mencoder.exe" copy "$(ProjectDir)mencoder.exe" "$(Targ
 copy UIThemes.pak "$(TargetDir)"
 copy "newton_float.cl" "$(TargetDir)"
 copy "newton_double.cl" "$(TargetDir)"
-if not exist "$(TargetDir)mencoder.exe" copy "$(ProjectDir)mencoder.exe" "$(TargetDir)"</Command>
+if not exist "$(TargetDir)ffmpeg.exe" copy "$(ProjectDir)ffmpeg.exe" "$(TargetDir)"</Command>
     </PostBuildEvent>
     <MASM>
       <PreprocessorDefinitions>ASMX86_32</PreprocessorDefinitions>
@@ -199,7 +199,7 @@ if not exist "$(TargetDir)mencoder.exe" copy "$(ProjectDir)mencoder.exe" "$(Targ
 copy UIThemes.pak "$(TargetDir)"
 copy "newton_float.cl" "$(TargetDir)"
 copy "newton_double.cl" "$(TargetDir)"
-if not exist "$(TargetDir)mencoder.exe" copy "$(ProjectDir)mencoder.exe" "$(TargetDir)"</Command>
+if not exist "$(TargetDir)ffmpeg.exe" copy "$(ProjectDir)ffmpeg.exe" "$(TargetDir)"</Command>
     </PostBuildEvent>
     <MASM>
       <PreprocessorDefinitions>ASMX86_64</PreprocessorDefinitions>

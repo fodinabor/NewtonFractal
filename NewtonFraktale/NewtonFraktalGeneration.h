@@ -42,10 +42,12 @@ public:
 	virtual void runNewton(NewtonFraktal *fraktal);
 
 	/**
-	* Typ of the generator.
+	* Type of the generator.
 	* Can be of values declared in NewtonFraktalGeneration (e.g. GENERATION_MODE_CPU).
 	*/
 	int generatorType;
+
+	int status;
 
 	static bool compComplex(const std::complex<double> z, const std::complex<double> c, double comp);
 };

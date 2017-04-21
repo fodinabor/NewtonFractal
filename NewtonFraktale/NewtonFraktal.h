@@ -28,6 +28,7 @@ SOFTWARE.
 #include "Polynom.h"
 #include <vector>
 #include <complex>
+#include <ctime>
 
 class NewtonFraktal : public Image {
 public:
@@ -44,6 +45,7 @@ public:
 	int* getResolution();
 	double* getArea();
 	double* getCenter();
+	double getContrast();
 	Polynom* getPolynom();
 	Polynom* getDerivation();
 
@@ -52,6 +54,8 @@ public:
 	double *getValues();
 	int *getIterations();
 	int *getTypes();
+
+	clock_t max_begin, max_end, draw_begin, draw_end;
 
 private:
 	__declspec(align(MEM_ALIGN)) double area[2];

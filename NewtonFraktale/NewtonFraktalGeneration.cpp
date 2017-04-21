@@ -26,6 +26,8 @@ SOFTWARE.
 #include "Polynom.h"
 #include <windows.h>
 #include <ctime>
+#include <sstream>
+#include <iomanip>
 
 const vector<int> NewtonFraktalGeneration::colorsHex = {
 	0x0000FF,
@@ -129,49 +131,88 @@ NewtonFraktalGeneration::~NewtonFraktalGeneration() {}
 
 void NewtonFraktalGeneration::generate(NewtonFraktal *fraktal, int mode, bool save) {
 	fraktal->allocGenRes();
-	getGeneratorForMode(mode)->runNewton(fraktal);
+	NewtonFraktalGenerator* generator = getGeneratorForMode(mode);
+
+	clock_t gen_begin = clock();
+	generator->runNewton(fraktal);
+	clock_t gen_end = clock();
+
 	fraktal->draw();
 
 	if (save) {
-		String timeS = String::IntToString(time(NULL));
+		FILE* logFile;
+		fopen_s(&logFile, "polynoms.log", "a");
+		String timeS = String::IntToString(time(NULL)), polynomS = fraktal->getPolynom()->getString();
+		fprintf(logFile, "Time: %s, Polynom: %s, Center: %.15Lf, %.15Lf, Area size: x: %.15Lf y: %.15Lf, Resolution: %dx%d, Contrast: %f, The computation took: %s secs, searching the max: %s secs, drawing: %s secs\n", timeS.c_str(), polynomS.c_str(), fraktal->getCenter()[0], fraktal->getCenter()[1], fraktal->getArea()[0], fraktal->getArea()[1], fraktal->getResolution()[0], fraktal->getResolution()[1], fraktal->getContrast(), String::NumberToString(double(gen_end - gen_begin) / CLOCKS_PER_SEC).c_str(), String::NumberToString(double(fraktal->max_end - fraktal->max_begin) / CLOCKS_PER_SEC).c_str(), String::NumberToString(double(fraktal->draw_end - fraktal->draw_begin) / CLOCKS_PER_SEC).c_str());
+		fclose(logFile);
 		fraktal->savePNG(timeS + ".png");
 	}
 }
 
 void NewtonFraktalGeneration::generate(NewtonFraktal * fraktal, NewtonFraktalGenerator * generator, bool save) {
 	fraktal->allocGenRes();
+
+	clock_t gen_begin = clock();
 	generator->runNewton(fraktal);
+	clock_t gen_end = clock();
+
 	fraktal->draw();
 
 	if (save) {
-		String timeS = String::IntToString(time(NULL));
+		FILE* logFile;
+		fopen_s(&logFile, "polynoms.log", "a");
+		String timeS = String::IntToString(time(NULL)), polynomS = fraktal->getPolynom()->getString();
+		fprintf(logFile, "Time: %s, Polynom: %s, Center: %.15Lf, %.15Lf, Area size: x: %.15Lf y: %.15Lf, Resolution: %dx%d, Contrast: %f, The computation took: %s secs, searching the max: %s secs, drawing: %s secs\n", timeS.c_str(), polynomS.c_str(), fraktal->getCenter()[0], fraktal->getCenter()[1], fraktal->getArea()[0], fraktal->getArea()[1], fraktal->getResolution()[0], fraktal->getResolution()[1], fraktal->getContrast(), String::NumberToString(double(gen_end - gen_begin) / CLOCKS_PER_SEC).c_str(), String::NumberToString(double(fraktal->max_end - fraktal->max_begin) / CLOCKS_PER_SEC).c_str(), String::NumberToString(double(fraktal->draw_end - fraktal->draw_begin) / CLOCKS_PER_SEC).c_str());
+		fclose(logFile);
 		fraktal->savePNG(timeS + ".png");
 	}
 }
 
 void NewtonFraktalGeneration::generateZoom(BezierCurve * areaCurve, BezierCurve * centerCurve, int framerate, int duration, int * resolution, Polynom * polynom, double contrast) {
-	double area, ratio = (double)resolution[1] / (double)resolution[0];
-	int frameCount = duration * framerate;
-	String setName = String::IntToString(time(NULL)), encoderCall = "cd " + setName + " && " + getExePath() + "\\mencoder \"mf://*.png\" -mf w=" + String::IntToString(resolution[0]) + ":h=" + String::IntToString(resolution[0]) + ":fps=" + String::IntToString(framerate) + " -o " + setName + ".avi -ovc lavc -lavcopts vcodec=mpeg4:mbd=2:trell";
+	double area, ratio = (double)resolution[1] / (double)resolution[0], step;
+	int frameCount = duration * framerate, nameLen = String::IntToString(frameCount).length();
+	//String setName = String::IntToString(time(NULL)), encoderCall = "cd " + setName + " && " + getExePath() + "\\mencoder \"mf://*.png\" -mf w=" + String::IntToString(resolution[0]) + ":h=" + String::IntToString(resolution[0]) + ":fps=" + String::IntToString(framerate) + " -o " + setName + ".avi -ovc lavc -lavcopts vcodec=mpeg4:mbd=2:trell";
+	String setName = String::IntToString(time(NULL)), encoderCall = "cd " + setName + " && " + getExePath() + "\\ffmpeg -s " + String::IntToString(resolution[0]) + "x" + String::IntToString(resolution[0]) + " -r " + String::IntToString(framerate) + " -i fractal%0" + String::IntToString(nameLen) + "d.png -vcodec libx264 -crf 15 -pix_fmt yuv420p " + setName + ".avi";
+	Vector3 center;
 
 	CreateDirectory(setName.getWDataWithEncoding(String::ENCODING_UTF8), NULL);
 
-	areaCurve->cacheHeightValues = true;
-	areaCurve->setHeightCacheResolution(framerate * duration);
+	//areaCurve->cacheHeightValues = true;
+	//areaCurve->setHeightCacheResolution(frameCount);
+	areaCurve->evaluationAccuracy = 0.0001;
+	centerCurve->evaluationAccuracy = 0.0001;
+	//centerCurve->cacheHeightValues = true;
+	//centerCurve->setHeightCacheResolution(frameCount);
+	BezierCurve::cacheHeightValues = false;
 
-	centerCurve->cacheHeightValues = true;
-	centerCurve->setHeightCacheResolution(framerate * duration);
+	step = 1.0 / frameCount;
 
-	for (long i = 0; i < frameCount; i++) {
+	BezierCurve* valueCurve = new BezierCurve();
+	valueCurve->evaluationAccuracy = 0.001;
+	valueCurve->addControlPoint2dWithHandles(((double)frameCount) * -0.01, 1.5, ((double)frameCount) * 0.0, 1.0, ((double)frameCount) * 0.01, 0.5 * contrast);
+	valueCurve->addControlPoint2dWithHandles(((double)frameCount) * 0.375 * contrast, 0.01, ((double)frameCount) * 1.0, 0.0, ((double)frameCount) * 1.3, -0.01);
+
+	double i = 0;
+	for (int j = 0; j <= frameCount; j++) {
+		i = 1.0 - valueCurve->getYValueAtX(j);
+
 		NewtonFraktal *fraktal = new NewtonFraktal(resolution[0], resolution[1]);
-		area = areaCurve->getYValueAtX(i / (double)frameCount);
+		area = areaCurve->getYValueAtX(i);
+		center = centerCurve->getPointAt(i);
 		fraktal->setArea(area, area * ratio);
-		fraktal->setCenter(centerCurve->getYValueAtX((double)i / (double) framerate), centerCurve->getTValueAtX((double)i / (double)framerate));
+		fraktal->setCenter(center.y, center.z);
 		fraktal->setContrast(contrast);
 		fraktal->setPolynom(polynom);
 
 		generate(fraktal, defaultGenerator, false);
-		fraktal->savePNG(setName + "/" + String::IntToString(time(NULL)) + ".png");
+
+		std::stringstream ss;
+		ss << std::setw(nameLen) << std::setfill('0') << j + 1;
+		String name = ss.str();
+		fraktal->savePNG(setName + "/fractal" + name + ".png");
+
+		BezierCurve::cacheHeightValues = false;
+		Logger::log("%i: i: %.15f center: %.15f, %.15f area: %.15f\n", j, i, centerCurve->getYValueAtX(i), centerCurve->getPointAt(i).z, areaCurve->getYValueAtX(i));
 
 		delete fraktal;
 	}
@@ -194,7 +235,7 @@ void NewtonFraktalGeneration::setDefaultGenerationMode(int newDef) {
 
 NewtonFraktalGenerator * NewtonFraktalGeneration::getGeneratorForMode(int mode) {
 	for (int i = 0; i < generators.size(); i++) {
-		if (generators[i]->generatorType == mode)
+		if (generators[i]->generatorType == mode && generators[i]->status == 0)
 			return generators[i];
 	}
 	for (int i = 0; i < generators.size(); i++) {
