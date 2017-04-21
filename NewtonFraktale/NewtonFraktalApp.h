@@ -90,6 +90,7 @@ private:
 	UIButton *openOptions;
 	SceneImage *centerSel;
 	UILabel* zoomL;
+	UILabel* nonDoubleLabel;
 
 	SceneImage *zoomSel;
 	bool dragging;

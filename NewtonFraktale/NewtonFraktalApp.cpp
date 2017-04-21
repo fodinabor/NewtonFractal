@@ -143,8 +143,8 @@ NewtonFraktalApp::NewtonFraktalApp(NewtonFraktalView *view) {
 	derivation->printPolynom();
 
 	res = new cl_int[2];
-	res[0] = 2000;
-	res[1] = 2000;
+	res[0] = 1000;
+	res[1] = 1000;
 
 	ratio = (double)res[1] / (double)res[0];
 
@@ -240,7 +240,7 @@ NewtonFraktalApp::NewtonFraktalApp(NewtonFraktalView *view) {
 	centerY->setPosition(12, 120);
 	centerY->addEventListener(this, UIEvent::CHANGE_EVENT);
 
-	zoomL = new UILabel(L"Ausschnittsgröße:", 12);
+	zoomL = new UILabel("Areasize:", 12);
 	zoomL->setPosition(12, 160);
 	win->addChild(zoomL);
 
@@ -275,7 +275,7 @@ NewtonFraktalApp::NewtonFraktalApp(NewtonFraktalView *view) {
 	resYInput->setPosition(85, 235);
 	resYInput->addEventListener(this, UIEvent::CHANGE_EVENT);
 
-	contrastLabel = new UILabel("Kontrast:", 12);
+	contrastLabel = new UILabel("Contrast:", 12);
 	win->addChild(contrastLabel);
 	contrastLabel->setPosition(12, 260);
 
@@ -299,6 +299,12 @@ NewtonFraktalApp::NewtonFraktalApp(NewtonFraktalView *view) {
 	win->addChild(redrawWinButton);
 	redrawWinButton->setPosition(12, win->getHeight() - 40);
 	redrawWinButton->addEventListener(this, UIEvent::CLICK_EVENT);
+
+	nonDoubleLabel = new UILabel("Warning: Only Polynoms with degree 8 supported.", 12);
+	win->addChild(nonDoubleLabel);
+	nonDoubleLabel->setColor(0.9, 0.5, 0.0, 1.0);
+	nonDoubleLabel->visible = false;
+	nonDoubleLabel->setPosition(12, 305);
 	
 	randomGenButton = new UIButton("Random", 50);
 	win->addChild(randomGenButton);
@@ -460,6 +466,8 @@ void NewtonFraktalApp::handleEvent(Event* e){
 		redrawIt();
 	} else if (e->getDispatcher() == openOptions) {
 		win->setPosition(core->getXRes() / 2 - win->getWidth() / 2, core->getYRes() / 2 - win->getHeight() / 2);
+		if (!usingDouble())
+			nonDoubleLabel->visible = true;
 		win->showWindow();
 	} else if (e->getDispatcher() == contrastSlider) {
 		contrastValue = contrastSlider->getSliderValue();
