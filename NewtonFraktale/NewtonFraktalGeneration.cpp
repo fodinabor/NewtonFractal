@@ -233,6 +233,10 @@ void NewtonFraktalGeneration::setDefaultGenerationMode(int newDef) {
 	defaultGenerator = getGeneratorForMode(defaultGenerationMode);
 }
 
+int NewtonFraktalGeneration::getDefaultGenerationMode() {
+	return defaultGenerationMode;
+}
+
 NewtonFraktalGenerator * NewtonFraktalGeneration::getGeneratorForMode(int mode) {
 	for (int i = 0; i < generators.size(); i++) {
 		if (generators[i]->generatorType == mode && generators[i]->status == 0)

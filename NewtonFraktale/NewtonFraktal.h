@@ -58,8 +58,8 @@ public:
 	clock_t max_begin, max_end, draw_begin, draw_end;
 
 private:
-	__declspec(align(MEM_ALIGN)) double area[2];
-	__declspec(align(MEM_ALIGN)) double center[2];
+	double *area;
+	double *center;
 
 	Polynom* polynom;
 	Polynom* derivation = nullptr;

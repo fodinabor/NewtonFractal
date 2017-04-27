@@ -75,7 +75,7 @@ NewtonFraktalApp::NewtonFraktalApp(NewtonFraktalView *view) {
 	Entity::defaultBlendingMode = Renderer::BLEND_MODE_NONE;
 	CoreServices::getInstance()->getRenderer()->setTextureFilteringMode(Renderer::TEX_FILTERING_NEAREST);
 
-	Services()->getLogger()->setLogToFile(true);
+	//Services()->getLogger()->setLogToFile(true);
 
 	clOptionsSet = false;
 

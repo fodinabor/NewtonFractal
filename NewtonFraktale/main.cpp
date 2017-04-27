@@ -76,6 +76,9 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 	srand(time(NULL));
 
+	Logger::getInstance()->setLogToFile(true);
+	Logger::log("Using SSE2: %s, AVX: %s.\n", InstructionSet::SSE2() ? "yes" : "no", InstructionSet::AVX() ? "yes" : "no");
+
 #ifdef _DEBUG
 	debug = true;
 #endif
@@ -100,12 +103,12 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 		return Msg.wParam;
 	} else {
-		Logger::getInstance()->setLogToFile(true);
 		if (debug)
 			OpenConsole();
 
 		if (vid) {
 			//int duration = 5, framerate = 20;
+
 			BezierCurve *areaCurve = new BezierCurve();
 			areaCurve->addControlPoint2d(0, 10);
 			//areaCurve->addControlPoint2d(2.0, 2.0);
@@ -120,16 +123,24 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 			//centerCurve->addControlPoint3d(0.3, 0.043820904830500, 0.729320429246429);
 			centerCurve->addControlPoint3d(duration / duration, 0.043820904830500, 0.729320429246429);
 
-			int res[2] = { 1920, 1080};
+			int res[2] = { 1920, 1080 };
 
 			NewtonFraktalGeneration *gen = new NewtonFraktalGeneration();
 			NewtonFraktalCLGenerator *clGen = new NewtonFraktalCLGenerator();
 			clGen->initCL(0, 0);
-			gen->registerGenerator(clGen, gen->GENERATION_MODE_CL);
-			gen->setDefaultGenerationMode(gen->GENERATION_MODE_CL);
+			if (clGen->err == CL_SUCCESS) {
+				gen->registerGenerator(clGen, gen->GENERATION_MODE_CL);
+				gen->setDefaultGenerationMode(gen->GENERATION_MODE_CL);
+			}
 
-			Polynom *polynom = Polynom::getRandomPolynom(23);
-			//Polynom *polynom = Polynom::readFromString("( 1 + 6 i)*x^ 23 + ( 14 + 3 i)*x^ 22 + ( 3 + 2 i)*x^ 21 + ( 6 + 8 i)*x^ 20 + ( 9 + 10 i)*x^ 19 + ( 4 + 2 i)*x^ 18 + ( 7 + 9 i)*x^ 17 + ( 3 + 11 i)*x^ 16 + ( 6 + 2 i)*x^ 15 + ( 5 + 8 i)*x^ 14 + ( 11 + 6 i)*x^ 13 + ( 7 + 7 i)*x^ 12 + ( 3 + 2 i)*x^ 11 + ( 9 + 6 i)*x^ 10 + ( 6 + 12 i)*x^ 9 + ( 2 + 10 i)*x^ 8 + ( 11 + 1 i)*x^ 7 + ( 12 + 1 i)*x^ 6 + ( 5 + 5 i)*x^ 5 + ( 14 + 7 i)*x^ 4 + ( 3 + 3 i)*x^ 3 + ( 4 + 14 i)*x^ 2 + ( 10 + 4 i)*x + ( 2 + 11 i)");
+			Polynom *polynom;
+			if (usingDouble())
+				polynom = Polynom::getRandomPolynom(MAX_DEGREE);
+			else
+				polynom = Polynom::getRandomPolynom(MAX_DEGREE_FLOAT);
+			delete polynom;
+			//polynom = Polynom::readFromString("( -5 + 0 i)*x^ 23 + ( 12 + -1 i)*x^ 22 + ( -16 + -16 i)*x^ 21 + ( -19 + 3 i)*x^ 20 + ( -2 + 19 i)*x^ 19 + ( -12 + 10 i)*x^ 18 + ( -7 + 15 i)*x^ 17 + ( -11 + -12 i)*x^ 16 + ( 2 + 15 i)*x^ 15 + ( -13 + 10 i)*x^ 14 + ( 9 + 13 i)*x^ 13 + ( -7 + 2 i)*x^ 12 + ( 9 + -15 i)*x^ 11 + ( -15 + 8 i)*x^ 10 + ( -13 + 9 i)*x^ 9 + ( 4 + -6 i)*x^ 8 + ( -10 + 2 i)*x^ 7 + ( -13 + -4 i)*x^ 6 + ( -3 + -1 i)*x^ 5 + ( -19 + -20 i)*x^ 4 + ( 1 + 8 i)*x^ 3 + ( 19 + -17 i)*x^ 2 + ( 16 + -19 i)*x + ( 8 + -19 i)");
+			polynom->printPolynom();
 
 			gen->generateZoom(areaCurve, centerCurve, framerate, duration, res, polynom, 0.35);
 		} else {
@@ -138,20 +149,29 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 			NewtonFraktalGeneration *gen = new NewtonFraktalGeneration();
 			NewtonFraktalCLGenerator *clGen = new NewtonFraktalCLGenerator();
 			clGen->initCL(0, 0);
-			gen->registerGenerator(clGen, gen->GENERATION_MODE_CL);
-			gen->setDefaultGenerationMode(gen->GENERATION_MODE_CL);
+			if (clGen->err == CL_SUCCESS) {
+				gen->registerGenerator(clGen, gen->GENERATION_MODE_CL);
+				gen->setDefaultGenerationMode(gen->GENERATION_MODE_CL);
+			}
 
 			NewtonFraktal *fraktal = new NewtonFraktal(res[0], res[1]);
 			fraktal->setArea(2, 2);
 			fraktal->setCenter(0, 0);
 			fraktal->setContrast(0.35);
-			fraktal->setPolynom(Polynom::getRandomPolynom(23));
 
-			gen->generate(fraktal, gen->GENERATION_MODE_CL);
+			Polynom *polynom;
+			if (usingDouble())
+				polynom = Polynom::getRandomPolynom(MAX_DEGREE);
+			else
+				polynom = Polynom::getRandomPolynom(MAX_DEGREE_FLOAT);
+			fraktal->setPolynom(polynom);
+			fraktal->getPolynom()->printPolynom();
+
+			gen->generate(fraktal, gen->getDefaultGenerationMode());
 		}
 
 		if (debug) {
-			cout << "Bitte Enter drücken..." << endl;
+			cout << "Please press Return..." << endl;
 			getchar();
 		}
 		return 0;

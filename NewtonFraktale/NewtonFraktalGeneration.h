@@ -86,6 +86,7 @@ public:
 
 	NewtonFraktalGenerator* registerGenerator(NewtonFraktalGenerator* newGen, int generatorType);
 	void setDefaultGenerationMode(int newDef);
+	int getDefaultGenerationMode();
 
 	static vector<Color> colors;
 

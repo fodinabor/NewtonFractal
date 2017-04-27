@@ -27,7 +27,10 @@ SOFTWARE.
 #include "PolyBezierCurve.h"
 #include <ctime>
 
-NewtonFraktal::NewtonFraktal(int xRes, int yRes) : Image(xRes, yRes, Image::IMAGE_RGBA) { }
+NewtonFraktal::NewtonFraktal(int xRes, int yRes) : Image(xRes, yRes, Image::IMAGE_RGBA) {
+	area = (double*)_aligned_malloc(2 * sizeof(double), 32);
+	center = (double*)_aligned_malloc(2 * sizeof(double), 32);
+}
 
 
 NewtonFraktal::~NewtonFraktal() {
@@ -40,7 +43,7 @@ NewtonFraktal::~NewtonFraktal() {
 void NewtonFraktal::draw() {
 	max_begin = clock();
 
-	double maxIters = 0;
+	int maxIters = 0;
 	for (int y = 0; y < height; y++) {
 		for (int x = 0; x < width; x++) {
 			if (types[x + y * width] >= 0) {
@@ -49,6 +52,10 @@ void NewtonFraktal::draw() {
 		}
 	}
 
+	if (maxIters < 35) {
+		maxIters = 35;
+	}
+	
 	max_end = clock();
 
 	draw_begin = clock();
@@ -78,7 +85,7 @@ void NewtonFraktal::draw() {
 				if (conDiv < 0.3)
 					conDiv = 0.3;
 
-				conDiv = colorCurve->getYValueAtX(conDiv / maxIters);
+				conDiv = colorCurve->getYValueAtX(conDiv / (double)maxIters);
 				col.setColorHSV(col.getHue(), col.getSaturation(), conDiv);
 				setPixel(x, y, col);
 			} else {
